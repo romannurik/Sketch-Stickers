@@ -1,0 +1,26 @@
+{
+  "identifier": "net.nurik.roman.sketch.stickers",
+  "compatibleVersion": 49,
+  "bundleVersion": 1,
+  "icon": "icon.png",
+  "commands": [
+    {
+      "script": "command-show-stickers.js",
+      "name": "Show Stickers",
+      "shortcut": "cmd shift \\",
+      "identifier": "show_stickers"
+    }
+  ],
+  "menu": {
+    "items": [
+      "show_stickers"
+    ],
+    "title": "🎈 Stickers"
+  },
+  "version": "0.1.0",
+  "name": "Stickers",
+  "disableCocoaScriptPreprocessor": true,
+  "appcast": "https://raw.githubusercontent.com//master/.appcast.xml",
+  "author": "Roman Nurik",
+  "authorEmail": "roman@nurik.net"
+}

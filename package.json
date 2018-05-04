@@ -1,0 +1,39 @@
+{
+  "name": "roman-test",
+  "version": "0.1.0",
+  "engines": {
+    "sketch": ">=3.0"
+  },
+  "skpm": {
+    "name": "Stickers",
+    "manifest": "src/manifest.json",
+    "main": "Stickers.sketchplugin",
+    "assets": [
+      "assets/**/*",
+      "!assets/**/*.js",
+      "web-dist/**/*",
+      "!web-dist/plugin-call.js"
+    ]
+  },
+  "scripts": {
+    "build": "cd web; npm run build; cd ..; skpm-build",
+    "watch": "cd web; npm run build; cd ..; skpm-build --watch",
+    "postinstall": "npm run build && skpm-link"
+  },
+  "resources": [
+    "assets/**/*.js"
+  ],
+  "author": "Roman Nurik <roman@nurik.net>",
+  "dependencies": {
+    "@skpm/events": "^0.1.1",
+    "@skpm/fs": "^0.1.2",
+    "@skpm/path": "^0.1.0",
+    "babel-polyfill": "^6.26.0",
+    "js-yaml": "^3.11.0",
+    "mocha-js-delegate": "^0.1.1",
+    "sketch-module-web-view": "git://github.com/romannurik/sketch-module-wk-web-view.git"
+  },
+  "devDependencies": {
+    "@skpm/builder": "^0.5.4"
+  }
+}

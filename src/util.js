@@ -1,0 +1,214 @@
+/*
+ * Copyright 2018 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import path from '@skpm/path';
+
+
+/**
+ * Performs a depth-first traversal of the layer tree, starting
+ * at the provided root layer.
+ */
+export function walkLayerTree(rootLayer, visitFunction, {reverse} = {reverse: false}) {
+  let visit_ = layer => {
+    // visit this layer
+    visitFunction(layer);
+
+    // visit children
+    let subLayers;
+    if ('layers' in layer) {
+      subLayers = arrayFromNSArray(layer.layers());
+    } else if ('artboards' in layer) {
+      subLayers = arrayFromNSArray(layer.artboards());
+    } else {
+      return;
+    }
+
+    if (reverse) {
+      subLayers.reverse();
+    }
+
+    subLayers.forEach(subLayer => visit_(subLayer));
+  };
+
+  visit_(rootLayer);
+}
+
+
+/**
+ * Converts an NSArray to a JS array
+ */
+export function arrayFromNSArray(nsArray) {
+  // TODO: this may no longer be needed... as of recent versions of sketch
+  // NSArray seems to be array-like. or at least replace with Array.from(nsarray)
+  let arr = [];
+  let count = nsArray.count();
+  for (let i = 0; i < count; i++) {
+    arr.push(nsArray.objectAtIndex(i));
+  }
+  return arr;
+}
+
+
+/**
+ * Returns the first layer matching the given NSPredicate
+ */
+export function getAllLayersMatchingPredicate(document, predicate) {
+  let results = [];
+  document.pages().forEach(page => {
+    results = results.concat(Array.from(page.children().filteredArrayUsingPredicate(predicate)));
+  });
+
+  return results;
+}
+
+
+/**
+ * Returns the first layer matching the given NSPredicate
+ */
+export function getLayerMatchingPredicate(document, predicate) {
+  let results;
+  document.pages().some(page => {
+    results = page.children().filteredArrayUsingPredicate(predicate);
+    return results.length;
+  });
+
+  return results.length ? results[0] : null;
+}
+
+
+/**
+ * Finds the layer with the given objectID in the given document.
+ */
+export function getLayerById(document, layerId) {
+  return getLayerMatchingPredicate(document,
+      NSPredicate.predicateWithFormat('objectID == %@', layerId));
+}
+
+
+/**
+ * Copied from @skpm/fs with intermediate directories.
+ */
+export function mkdirpSync(path, mode) {
+  mode = mode || 0o777;
+  let err = MOPointer.alloc().init();
+  let fileManager = NSFileManager.defaultManager();
+  fileManager.createDirectoryAtPath_withIntermediateDirectories_attributes_error(path, true, {
+    NSFilePosixPermissions: mode
+  }, err);
+
+  if (err.value() !== null) {
+    throw new Error(err.value());
+  }
+}
+
+
+/**
+ * Returns an MSDocument for the given .sketch file path. May take
+ * a long time!
+ */
+export function loadDocFromSketchFile(filePath) {
+  let doc = MSDocument.new();
+  doc.readDocumentFromURL_ofType_error_(
+      NSURL.fileURLWithPath(filePath),
+      'com.bohemiancoding.sketch.drawing',
+      null);
+  
+  return doc;
+}
+
+
+/**
+ * Returns an NSImage for the given layer in the given document.
+ */
+export function getLayerImage(document, layer) {
+  let tempPath = NSTemporaryDirectory().stringByAppendingPathComponent(
+      NSUUID.UUID().UUIDString() + '.png');
+  captureLayerImage(document, layer, tempPath);
+  return NSImage.alloc().initWithContentsOfFile(tempPath);
+}
+
+
+/**
+ * Saves the given layer in the given document to a PNG file at the given path.
+ */
+export function captureLayerImage(document, layer, destPath) {
+  let air = layer.absoluteInfluenceRect();
+  let rect = NSMakeRect(air.origin.x, air.origin.y, air.size.width, air.size.height);
+  let exportRequest = MSExportRequest.exportRequestsFromLayerAncestry_inRect_(
+      MSImmutableLayerAncestry.ancestryWithMSLayer_(layer),
+      rect // we pass this to avoid trimming
+      ).firstObject();
+  exportRequest.format = 'png';
+  exportRequest.scale = 2;
+  // exportRequest.shouldTrim = false;
+  document.saveArtboardOrSlice_toFile_(exportRequest, destPath);
+}
+
+
+/**
+ * Converts an NSImage to a data URL string (png).
+ */
+export function nsImageToDataUri(image) {
+  let data = image.TIFFRepresentation();
+  let bitmap = NSBitmapImageRep.imageRepWithData(data);
+  data = bitmap.representationUsingType_properties_(NSPNGFileType, null);
+  let base64 = 'data:image/png;base64,' + data.base64EncodedStringWithOptions(0);
+  return base64;
+}
+
+
+/**
+ * Returns the system cache path for the plugin.
+ */
+export function getPluginCachePath() {
+  let cachePath = String(NSFileManager.defaultManager().URLsForDirectory_inDomains_(
+      NSCachesDirectory,
+      NSUserDomainMask)[0].path());
+  let pluginCacheKey = String(__command.pluginBundle().identifier()); // TODO: escape if needed
+  return path.join(cachePath, pluginCacheKey);
+}
+
+
+/**
+ * Give the CPU some breathing room.
+ */
+export function unpeg() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(), 0);
+  });
+}
+
+
+/**
+ * Profile the running time of a method
+ */
+export function _profile(fnOrPromise, tag = '') {
+  tag = tag ? ` [${tag}]` : '';
+  let t = Number(new Date());
+
+  let finish = () => {
+    t = Number(new Date()) - t;
+    log(`profile${tag}: ${t}ms`);
+  };
+
+  if (fnOrPromise instanceof Promise) {
+    fnOrPromise.then(() => finish());
+    return fnOrPromise;
+  } else {
+    fnOrPromise();
+    finish();
+  }
+}

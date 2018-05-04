@@ -1,0 +1,20 @@
+{
+  "identifier" : "net.nurik.roman.sketch.stickers",
+  "compatibleVersion": 49,
+  "bundleVersion": 1,
+  "icon": "icon.png",
+  "commands": [
+    {
+      "script" : "./command-show-stickers.js",
+      "name" : "Show Stickers",
+      "shortcut": "cmd shift \\",
+      "identifier" : "show_stickers"
+    }
+  ],
+  "menu": {
+    "items": [
+      "show_stickers"
+    ],
+    "title": "🎈 Stickers"
+  }
+}
