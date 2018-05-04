@@ -1,5 +1,6 @@
 {
-  "name": "roman-test",
+  "name": "sketch-stickers",
+  "description": "A Sketch plugin that lets you browse and quickly drag+drop stickers (specially tagged layers) in your Sketch Libraries.",
   "version": "0.1.0",
   "engines": {
     "sketch": ">=3.0"
@@ -23,6 +24,15 @@
   "resources": [
     "assets/**/*.js"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/romannurik/Sketch-Stickers.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/romannurik/Sketch-Stickers/issues"
+  },
+  "homepage": "https://github.com/romannurik/Sketch-Stickers#readme",
   "author": "Roman Nurik <roman@nurik.net>",
   "dependencies": {
     "@skpm/events": "^0.1.1",
