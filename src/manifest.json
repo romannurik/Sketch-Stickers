@@ -8,13 +8,15 @@
       "script" : "./command-show-stickers.js",
       "name" : "Show Stickers",
       "shortcut": "cmd shift \\",
-      "identifier" : "show_stickers"
+      "identifier" : "show_stickers",
+      "description" : "Show or hide the Stickers window.",
+      "icon" : "icon.png"
     }
   ],
   "menu": {
     "items": [
       "show_stickers"
     ],
-    "title": "🎈 Stickers"
+    "title": "Stickers"
   }
 }

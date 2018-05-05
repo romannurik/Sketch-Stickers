@@ -8,14 +8,16 @@
       "script": "command-show-stickers.js",
       "name": "Show Stickers",
       "shortcut": "cmd shift \\",
-      "identifier": "show_stickers"
+      "identifier": "show_stickers",
+      "description": "Show or hide the Stickers window.",
+      "icon": "icon.png"
     }
   ],
   "menu": {
     "items": [
       "show_stickers"
     ],
-    "title": "🎈 Stickers"
+    "title": "Stickers"
   },
   "version": "0.1.1",
   "description": "A Sketch plugin that lets you browse and quickly drag+drop stickers (specially tagged layers) in your Sketch Libraries.",
