@@ -5,7 +5,10 @@
   "icon": "icon.png",
   "commands": [
     {
-      "script" : "./command-show-stickers.js",
+      "script" : "./commands.js",
+      "handlers": {
+        "run": "onShowStickers"
+      },
       "name" : "Show Stickers",
       "shortcut": "cmd shift \\",
       "identifier" : "show_stickers",

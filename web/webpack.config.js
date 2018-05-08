@@ -17,18 +17,22 @@
 const path = require('path');
 const sassAssetFunctions = require('node-sass-asset-functions');
 
-
 module.exports = {
-  mode: 'development',
+  mode: process.env.NODE_ENV || 'development',
   devServer: {
-    contentBase: path.join(__dirname, "../web-dist"),
+    contentBase: path.join(__dirname, '../web-dist'),
     compress: true,
     port: 9000,
     watchContentBase: true,
   },
   entry: {
-    'plugin-call': ['./src/plugin-call-stub.js'],
-    index: ['./src/index.js', 'webpack-dev-server/client?http://localhost:8080/'],
+    'plugin-call': [
+      './src/plugin-call-stub.js',
+    ],
+    'index': [
+      './src/index.js',
+      'webpack-dev-server/client?http://localhost:9080/'
+    ],
   },
   output: {
     filename: '[name].js',
@@ -40,22 +44,26 @@ module.exports = {
       vue: 'vue/dist/vue.js'
     }
   },
+  performance: {
+    hints: false
+  },
   module: {
     rules: [
       {
         test: /\.(html)$/,
         use: [
           {
-            loader: "extract-loader",
+            loader: 'extract-loader',
           },
           {
-            loader: "html-loader",
+            loader: 'html-loader',
             options: {
               attrs: [
                 'img:src',
                 'link:href'
               ],
               interpolate: true,
+              minimize: 'production' === process.env.NODE_ENV,
             },
           },
         ]
@@ -64,22 +72,25 @@ module.exports = {
         test: /\.(scss)$/,
         use: [
           {
-            loader: "file-loader",
+            loader: 'file-loader',
             options: {
               name: '[name].css'
             }
           },
           {
-            loader: "extract-loader",
+            loader: 'extract-loader',
           },
           {
             loader: 'css-loader',
+            options: {
+              minimize: 'production' === process.env.NODE_ENV,
+            },
           },
           {
-            loader: "sass-loader",
+            loader: 'sass-loader',
             options: {
               functions: sassAssetFunctions({
-                images_path: 'src',
+                images_path: path.join(__dirname, 'src'),
               }),
             },
           },
@@ -89,13 +100,13 @@ module.exports = {
         test: /\.(png|svg)$/,
         use: [
           {
-            loader: "file-loader",
+            loader: 'file-loader',
             options: {
               name: '[name].[ext]'
             }
           },
           {
-            loader: "image-webpack-loader",
+            loader: 'image-webpack-loader',
           }
         ]
       },
@@ -103,7 +114,7 @@ module.exports = {
         test: /\.(woff2)$/,
         use: [
           {
-            loader: "file-loader",
+            loader: 'file-loader',
             options: {
               name: '[name].[ext]'
             }

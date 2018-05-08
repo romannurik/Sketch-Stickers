@@ -17,8 +17,8 @@
     ]
   },
   "scripts": {
-    "build": "cd web; npm run build; cd ..; skpm-build",
-    "watch": "cd web; npm run build; cd ..; skpm-build --watch",
+    "build": "./skpm-build-with-child.js web",
+    "watch": "./skpm-build-with-child.js web --watch",
     "postinstall": "npm run build && skpm-link"
   },
   "resources": [
