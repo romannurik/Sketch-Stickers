@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import * as util from './util';
 
 /**
@@ -21,7 +5,7 @@ import * as util from './util';
  * document, and swaps any local symbols with the library versions.
  */
 export function swapLocalSymbolsWithLibrary(document, library) {
-  let librariesController = NSApp.delegate().librariesController();
+  let librariesController = getLibrariesController();
 
   let symbolInfosByObjectId = {};
 
@@ -69,7 +53,7 @@ export function swapLocalSymbolsWithLibrary(document, library) {
     }
 
     // import the symbol!
-    symbolInfo.foreignSymbol = librariesController.importForeignSymbol_fromLibrary_intoDocument(
+    symbolInfo.foreignSymbol = importForeignSymbolCompat(
         symbolInfo.localSymbol, library, document.documentData());
     localToForeignSymbolIdMap[symbolInfo.localSymbolId] =
         String(symbolInfo.foreignSymbol.symbolMaster().symbolID());
@@ -117,8 +101,7 @@ function replaceSymbolMaster(masterFrom, masterTo, overridesIdMapToUpdate = null
  * (which is a UUID)
  */
 export function getLibraryById(libraryId) {
-  let librariesController = NSApp.delegate().librariesController();
-  return util.arrayFromNSArray(librariesController.libraries())
+  return util.arrayFromNSArray(getLibrariesController().libraries())
       .find(lib => String(lib.libraryID()) == libraryId);
 }
 
@@ -127,10 +110,9 @@ export function getLibraryById(libraryId) {
  * Adds the given .sketch file as a library in Sketch.
  */
 export function addLibrary(context, librarySketchFilePath) {
-  NSApp.delegate().librariesController().addAssetLibraryAtURL(
-      NSURL.fileURLWithPath(librarySketchFilePath));
+  getLibrariesController().addAssetLibraryAtURL(NSURL.fileURLWithPath(librarySketchFilePath));
   // TODO: fix the library not showing up in the preferences pane until sketch restart
-  AppController.sharedInstance().librariesController().notifyLibraryChange(null);
+  getLibrariesController().notifyLibraryChange(null);
   // var libPaneIdentifier = MSAssetLibrariesPreferencePane.identifier();
   // var libPane = MSPreferencesController.sharedController().preferencePanes().objectForKey(libPaneIdentifier);
   // libPane.tableView().reloadData();
@@ -141,7 +123,7 @@ export function addLibrary(context, librarySketchFilePath) {
  * Replaces all symbol instances under (and including) the given parent layer with
  * those found in the given MSAssetLibrary.
  */
-export function replaceSymbolsInLayerWithLibrary(parentDocumentData, parentLayer, library) {
+export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, library) {
   if (parentLayer.children) {
     let allSymbolInstances = parentLayer.children()
         .filteredArrayUsingPredicate(NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
@@ -150,12 +132,10 @@ export function replaceSymbolsInLayerWithLibrary(parentDocumentData, parentLayer
     // that library instead of the given library
 
     let maybeImportForeignSymbolWithSymbolId = symbolId => {
-      let librarySymbolMaster = library.symbolWithID(symbolId);
+      let librarySymbolMaster = library.document().symbolWithID(symbolId);
       if (librarySymbolMaster) {
-        let librariesController = AppController.sharedInstance().librariesController();
-        let foreignSymbol = librariesController.importForeignSymbol_fromLibrary_intoDocument(
-            librarySymbolMaster, library, parentDocumentData);
-        return foreignSymbol;
+        return importForeignSymbolCompat(librarySymbolMaster, library,
+            parentDocument.documentData());
       }
 
       return null;
@@ -187,13 +167,39 @@ export function replaceSymbolsInLayerWithLibrary(parentDocumentData, parentLayer
 
 
 /**
+ * /**
+ * Compatibility layer for importForeignSymbol_fromLibrary_intoDocument,
+ * removed in Sketch 50.
+ *
+ * @param {MSSymbolMaster} librarySymbolMaster The symbol master in the library to import
+ * @param {MSAssetLibrary} library The library to import from
+ * @param {MSDocumentData} parentDocumentData The document data to import into
+ * @returns {MSForeignSymbol}
+ */
+function importForeignSymbolCompat(librarySymbolMaster, library, parentDocumentData) {
+  let librariesController = getLibrariesController();
+  if (librariesController.importForeignSymbol_fromLibrary_intoDocument) {
+    // Sketch < 50
+    return librariesController.importForeignSymbol_fromLibrary_intoDocument(
+        librarySymbolMaster, library, parentDocumentData);
+  } else {
+    // Sketch 50
+    let shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(
+        librarySymbolMaster, library);
+    return librariesController.importShareableObjectReference_intoDocument(
+        shareableObjectReference, parentDocumentData);
+  }
+}
+
+
+/**
  * Returns an MSDocument for the library with the given ID (cached).
  * Note: this operation may take a while.
  */
 export function docForLibraryId(libraryId) {
   docForLibraryId.__cache__ = docForLibraryId.__cache__ || {};
   if (!(libraryId in docForLibraryId.__cache__)) {
-    let library = Array.from(NSApp.delegate().librariesController().libraries())
+    let library = Array.from(getLibrariesController().libraries())
         .find(lib => String(lib.libraryID()) == libraryId);
     if (!library) {
       return null;
@@ -204,4 +210,12 @@ export function docForLibraryId(libraryId) {
   }
 
   return docForLibraryId.__cache__[libraryId];
+}
+
+
+/**
+ * Gets the app instance's MSAssetLibraryController
+ */
+function getLibrariesController() {
+  return AppController.sharedInstance().librariesController();
 }
