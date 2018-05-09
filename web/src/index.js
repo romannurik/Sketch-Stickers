@@ -35,10 +35,36 @@ class StickersPage {
     StickersClient.on('load-progress', f => this.showLoadProgress(f));
     StickersClient.once('loaded', stickerIndex => {
       this.stickerIndex = stickerIndex;
+      this.processStickerIndex();
       this.setupStickersUi();
       $(document.body).removeAttr('is-loading');
       setTimeout(() => $('.header-area__search-field').focus(), 0);
     });
+  }
+
+  processStickerIndex() {
+    for (let section of this.stickerIndex.sections) {
+      section.rows = [];
+      let currentRow = null;
+
+      let newRow = () => {
+        currentRow = {items: []};
+        section.rows.push(currentRow);
+      };
+
+      for (let item of section.items) {
+        if (item.layout == 'row') {
+          newRow();
+          currentRow.items.push(item);
+          newRow();
+        } else {
+          if (!currentRow) {
+            newRow();
+          }
+          currentRow.items.push(item);
+        }
+      }
+    }
   }
 
   showLoadProgress(f) {

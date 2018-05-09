@@ -28,27 +28,29 @@
         </a>
       </div>
       <div class="sticker-root-section__content">
-        <template v-for="item in section.items">
-          <div v-if="item.type == 'section'" v-bind:layout="item.layout || 'default'" class="sticker-sub-section">
-            <!-- subsections treated as columns -->
-            <hilitext class="sticker-sub-section__title sticker-sub-section__hilitext" v-bind:text="item.title"></hilitext>
-            <hilitext class="sticker-sub-section__description sticker-sub-section__hilitext" v-bind:text="item.description"></hilitext>
-            <div class="sticker-sub-section__content"
-                v-bind:class="{
-                  'is-hide-names': item.hideNames,
-                  'has-background-color': !!item.background
-                }"
-                v-bind:style="{'background-color': item.background}">
-              <sticker
-                  v-bind:parent-section="item"
-                  v-for="subItem in item.items" :key="subItem.id" v-bind:sticker="subItem"></sticker>
+        <div class="sticker-root-section__content-row" v-for="row in section.rows">
+          <template v-for="item in row.items">
+            <div v-if="item.type == 'section'" v-bind:layout="item.layout || 'default'" class="sticker-sub-section">
+              <!-- subsections treated as columns -->
+              <hilitext class="sticker-sub-section__title sticker-sub-section__hilitext" v-bind:text="item.title"></hilitext>
+              <hilitext class="sticker-sub-section__description sticker-sub-section__hilitext" v-bind:text="item.description"></hilitext>
+              <div class="sticker-sub-section__content"
+                  v-bind:class="{
+                    'is-hide-names': item.hideNames,
+                    'has-background-color': !!item.background
+                  }"
+                  v-bind:style="{'background-color': item.background}">
+                <sticker
+                    v-bind:parent-section="item"
+                    v-for="subItem in item.items" :key="subItem.id" v-bind:sticker="subItem"></sticker>
+              </div>
             </div>
-          </div>
-          <template v-if="item.type == 'layer'">
-            <!-- individual sticker -->
-            <sticker v-bind:parent-section="section" v-bind:sticker="item"></sticker>
+            <template v-if="item.type == 'layer'">
+              <!-- individual sticker -->
+              <sticker v-bind:parent-section="section" v-bind:sticker="item"></sticker>
+            </template>
           </template>
-        </template>
+        </div>
       </div>
     </div>
     <div class="zero-state no-stickers" v-if="!$globals.searchText && !stickerIndex.sections.length">
@@ -77,7 +79,8 @@
             'background-color': parentSection.backgroundEach,
             'width': drawSize.width + 'px',
             'height': drawSize.height + 'px'
-          }">
+          }"
+          v-bind:title="sticker.name">
         <div class="sticker__thumb"></div>
       </div>
       <hilitext class="sticker__caption sticker__hilitext" v-bind:text="sticker.name"></hilitext>

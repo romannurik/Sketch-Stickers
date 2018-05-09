@@ -246,6 +246,13 @@ body {
   }
 
   &__content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__content-row {
     padding: 12px var(--side-margin) var(--root-section-vert-padding) (#{$scrollFadeSize}); // space for box-shadows and gradient
     margin: -12px 0 0 (-$scrollFadeSize); // offset for box shadow
 
@@ -255,6 +262,7 @@ body {
     }
 
     overflow-x: auto;
+    align-self: stretch;
     display: flex;
     flex-direction: row;
 
@@ -276,7 +284,7 @@ body {
     }
   }
 
-  &[layout="flow"] .sticker-root-section__content {
+  &[layout="flow"] .sticker-root-section__content-row {
     flex-flow: row wrap;
 
     .sticker {
@@ -319,6 +327,16 @@ body {
     .sticker__caption {
       display: none;
     }
+  }
+
+  &[layout="row"] &__content {
+    display: flex;
+    flex-direction: row;
+
+    .sticker + .sticker {
+      margin-top: 0;
+      margin-left: 20px;
+    }  
   }
 }
 
