@@ -100,6 +100,8 @@ export class StickersUI {
       coscript.setShouldKeepAround(false);
     });
 
+    this.browserWindow.on('blur', () => this.browserWindow.close());
+
     if (UI_MODE == 'cover') {
       this.browserWindow.setResizable(false);
       this.browserWindow._panel.setFrame_display_animate_(docWindow.frame(), false, false);
