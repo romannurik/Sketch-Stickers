@@ -62,30 +62,48 @@ export function arrayFromNSArray(nsArray) {
 }
 
 
+
+
 /**
  * Returns the first layer matching the given NSPredicate
+ *
+ * @param {MSDocument|MSLayerGroup} parent The document or layer group to search.
+ * @param {NSPredicate} predicate Search predicate
  */
-export function getAllLayersMatchingPredicate(document, predicate) {
-  let results = [];
-  document.pages().forEach(page => {
-    results = results.concat(Array.from(page.children().filteredArrayUsingPredicate(predicate)));
-  });
+export function getAllLayersMatchingPredicate(parent, predicate) {
+  if (parent instanceof MSDocument) {
+    // MSDocument
+    return parent.pages().reduce(
+        (acc, page) => acc.concat(getAllLayersMatchingPredicate(page, predicate)),
+        []);
+  }
 
-  return results;
+  // assume MSLayerGroup
+  return Array.from(parent.children().filteredArrayUsingPredicate(predicate));
 }
 
 
 /**
  * Returns the first layer matching the given NSPredicate
+ *
+ * @param {MSDocument|MSLayerGroup} parent The document or layer group to search.
+ * @param {NSPredicate} predicate Search predicate
  */
-export function getLayerMatchingPredicate(document, predicate) {
-  let results;
-  document.pages().some(page => {
-    results = page.children().filteredArrayUsingPredicate(predicate);
-    return results.length;
-  });
+export function getFirstLayerMatchingPredicate(parent, predicate) {
+  if (parent instanceof MSDocument) {
+    // MSDocument
+    let results;
+    for (page of Array.from(parent.pages())) {
+      let firstInPage = getFirstLayerMatchingPredicate(page, predicate);
+      if (firstInPage) {
+        return firstInPage;
+      }
+    }
+    return null;
+  }
 
-  return results.length ? results[0] : null;
+  // assume MSLayerGroup
+  return getAllLayersMatchingPredicate(parent, predicate)[0] || null;
 }
 
 
@@ -93,7 +111,7 @@ export function getLayerMatchingPredicate(document, predicate) {
  * Finds the layer with the given objectID in the given document.
  */
 export function getLayerById(document, layerId) {
-  return getLayerMatchingPredicate(document,
+  return getFirstLayerMatchingPredicate(document,
       NSPredicate.predicateWithFormat('objectID == %@', layerId));
 }
 

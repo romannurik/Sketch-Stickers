@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import * as util from './util';
 
 /**
@@ -38,26 +22,21 @@ export function swapLocalSymbolsWithLibrary(document, library) {
 
   // gather up all symbol masters used on this page that are in the library
   let symbolMastersToReplace = [];
-  util.arrayFromNSArray(document.pages()).forEach(page => {
-    util.walkLayerTree(page, layer => {
-      if (!(layer instanceof MSSymbolMaster)) {
-        return;
-      }
+  let allSymbolMasters = util.getAllLayersMatchingPredicate(document,
+      NSPredicate.predicateWithFormat('className == %@', 'MSSymbolMaster'));
+  allSymbolMasters.forEach(symbolMaster => {
+    let objectId = String(symbolMaster.objectID());
+    if (!(objectId in symbolInfosByObjectId)) {
+      return;
+    }
 
-      let symbolMaster = layer;
-      let objectId = String(symbolMaster.objectID());
-      if (!(objectId in symbolInfosByObjectId)) {
-        return;
-      }
+    // found a symbol master in the library
+    symbolMastersToReplace.push(symbolMaster);
 
-      // found a symbol master in the library
-      symbolMastersToReplace.push(symbolMaster);
-
-      // if it's used in the doc, flag it for import
-      if (util.arrayFromNSArray(symbolMaster.allInstances()).length) {
-        symbolInfosByObjectId[objectId].shouldImport = true;
-      }
-    });
+    // if it's used in the doc, flag it for import
+    if (util.arrayFromNSArray(symbolMaster.allInstances()).length) {
+      symbolInfosByObjectId[objectId].shouldImport = true;
+    }
   });
 
   // import library symbols used in this document and create mapping from
@@ -130,7 +109,8 @@ export function addLibrary(context, librarySketchFilePath) {
   // TODO: fix the library not showing up in the preferences pane until sketch restart
   getLibrariesController().notifyLibraryChange(null);
   // var libPaneIdentifier = MSAssetLibrariesPreferencePane.identifier();
-  // var libPane = MSPreferencesController.sharedController().preferencePanes().objectForKey(libPaneIdentifier);
+  // var libPane = MSPreferencesController.sharedController().preferencePanes()
+  //     .objectForKey(libPaneIdentifier);
   // libPane.tableView().reloadData();
 }
 
@@ -141,8 +121,8 @@ export function addLibrary(context, librarySketchFilePath) {
  */
 export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, library) {
   if (parentLayer.children) {
-    let allSymbolInstances = parentLayer.children()
-        .filteredArrayUsingPredicate(NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
+    let allSymbolInstances =  util.getAllLayersMatchingPredicate(
+        parentLayer, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
 
     // TODO: for symbols in a library that's nested within the given library, import from
     // that library instead of the given library
