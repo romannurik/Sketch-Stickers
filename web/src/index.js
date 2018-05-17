@@ -43,25 +43,30 @@ class StickersPage {
   }
 
   processStickerIndex() {
-    for (let section of this.stickerIndex.sections) {
-      section.rows = [];
-      let currentRow = null;
+    this.stickerIndex.libraries = this.stickerIndex.libraries
+        .filter(lib => !!lib.sections.length);
 
-      let newRow = () => {
-        currentRow = {items: []};
-        section.rows.push(currentRow);
-      };
+    for (let library of this.stickerIndex.libraries) {
+      for (let section of library.sections) {
+        section.rows = [];
+        let currentRow = null;
 
-      for (let item of section.items) {
-        if (item.layout == 'row') {
-          newRow();
-          currentRow.items.push(item);
-          newRow();
-        } else {
-          if (!currentRow) {
+        let newRow = () => {
+          currentRow = {items: []};
+          section.rows.push(currentRow);
+        };
+
+        for (let item of section.items) {
+          if (item.layout == 'row') {
             newRow();
+            currentRow.items.push(item);
+            newRow();
+          } else {
+            if (!currentRow) {
+              newRow();
+            }
+            currentRow.items.push(item);
           }
-          currentRow.items.push(item);
         }
       }
     }

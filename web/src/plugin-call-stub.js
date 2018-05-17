@@ -70,6 +70,10 @@ function __getStickerById(id) {
     });
   };
 
-  STUB_STICKER_INDEX.sections.forEach(section => findInSection(section));
+  for (let library of STUB_STICKER_INDEX.libraries) {
+    for (let section of library.sections) {
+      findInSection(section);
+    }
+  }
   return foundSticker;
 }

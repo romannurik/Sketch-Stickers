@@ -230,3 +230,19 @@ export function _profile(fnOrPromise, tag = '') {
     finish();
   }
 }
+
+
+/**
+ * Returns the name of the given document, if it has one.
+ *
+ * @param {MSDocument} document
+ */
+export function getDocumentName(document) {
+  let fileURL = document.fileURL();
+  if (fileURL) {
+    fileURL = String(fileURL.path());
+    return path.basename(fileURL).replace(/\.[^.]+$/, ''); // strip extension
+  }
+
+  return null;
+}

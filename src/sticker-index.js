@@ -22,7 +22,7 @@ import * as libraries from './util-libraries';
 import * as util from './util';
 import {ProgressReporter} from './util-progress-reporter';
 
-const INDEX_FORMAT_VERSION = 1;
+const INDEX_FORMAT_VERSION = 2;
 const FORCE_REBULD = false;
 
 
@@ -44,7 +44,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
   let childProgressReporters = progressReporter.makeChildren(libraries.length);
 
   // build indexes
-  let compositeIndex = {sections: []};
+  let compositeIndex = {libraries: []};
   for (let [i, lib] of libraries.entries()) {
     await util.unpeg();
 
@@ -56,28 +56,29 @@ export async function makeStickerIndexForLibraries({onProgress}) {
 
     let cachePath = path.join(util.getPluginCachePath(), lib.libraryId);
 
-    let index = null;
+    let libraryIndex = null;
     let indexCachePath = path.join(cachePath, 'index.json');
 
     try {
-      index = JSON.parse(fs.readFileSync(indexCachePath, {encoding: 'utf8'}));
+      libraryIndex = JSON.parse(fs.readFileSync(indexCachePath, {encoding: 'utf8'}));
     } catch (e) {
     }
 
     if (FORCE_REBULD ||
-        !index ||
-        index.timestamp < modifiedDateMs ||
-        index.version < INDEX_FORMAT_VERSION) {
+        !libraryIndex ||
+        libraryIndex.timestamp < modifiedDateMs ||
+        (libraryIndex.formatVersion || 0) < INDEX_FORMAT_VERSION) {
       // need to rebuild the cached index
       let doc = util.loadDocFromSketchFile(lib.sketchFilePath);
-      index = await buildStickerIndexForLibrary(
+      doc.setFileURL(NSURL.fileURLWithPath(lib.sketchFilePath));
+      libraryIndex = await buildStickerIndexForLibrary(
           lib.libraryId, doc, childProgressReporters[i]);
 
       // cache the index
       util.mkdirpSync(path.dirname(indexCachePath));
       fs.writeFileSync(indexCachePath,
-          JSON.stringify(Object.assign(index, {
-            version: INDEX_FORMAT_VERSION,
+          JSON.stringify(Object.assign(libraryIndex, {
+            formatVersion: INDEX_FORMAT_VERSION,
             timestamp: modifiedDateMs + 1, // add a second to avoid precision issues
           })),
           {encoding: 'utf8'});
@@ -85,7 +86,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
       childProgressReporters[i].forceProgress(1);
     }
 
-    compositeIndex.sections = compositeIndex.sections.concat(index.sections || []);
+    compositeIndex.libraries.push(libraryIndex);
   }
 
   return compositeIndex;
@@ -217,5 +218,9 @@ async function buildStickerIndexForLibrary(libraryId, document, progressReporter
 
   sections = nonEmptyItems(sections);
 
-  return {sections};
+  return {
+    id: libraryId,
+    title: util.getDocumentName(document),
+    sections
+  };
 }

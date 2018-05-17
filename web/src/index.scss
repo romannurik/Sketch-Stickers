@@ -25,6 +25,7 @@
 @import './components/button/button';
 
 $headerHeight: 48px;
+$libraryHeaderHeight: 40px;
 
 [v-cloak] {
   display: none !important;
@@ -174,10 +175,7 @@ body {
   align-items: stretch;
   flex-shrink: 0;
   padding: var(--root-section-vert-padding) 0 0 0;
-
-  &:not(:last-child) {
-    box-shadow: 0 1px 0 $colorThinBorder;
-  }
+  box-shadow: 0 1px 0 $colorThinBorder;
 
   @include narrow {
     flex-direction: column;
@@ -225,18 +223,24 @@ body {
     padding: 0 40px var(--root-section-vert-padding) var(--side-margin);
   }
 
+  &__overline {
+    @include type-body-4;
+    color: $colorBlackTertiary;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
   &__title {
     @include type-headline-1;
     font-weight: 800;
     color: $colorBlackPrimary;
-    grid-area: title;
   }
 
   &__description {
     @include type-body-2;
     margin-top: 16px;
     color: $colorBlackSecondary;
-    grid-area: description;
   }
 
   &__link {
