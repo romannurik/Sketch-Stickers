@@ -106,12 +106,8 @@ export function getLibraryById(libraryId) {
  */
 export function addLibrary(context, librarySketchFilePath) {
   getLibrariesController().addAssetLibraryAtURL(NSURL.fileURLWithPath(librarySketchFilePath));
-  // TODO: fix the library not showing up in the preferences pane until sketch restart
-  getLibrariesController().notifyLibraryChange(null);
-  // var libPaneIdentifier = MSAssetLibrariesPreferencePane.identifier();
-  // var libPane = MSPreferencesController.sharedController().preferencePanes()
-  //     .objectForKey(libPaneIdentifier);
-  // libPane.tableView().reloadData();
+  getLibrariesController().notifyLibraryChange(
+      getLibrariesController().userLibraries().firstObject()); // notify change on any lib
 }
 
 
