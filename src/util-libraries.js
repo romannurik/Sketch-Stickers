@@ -133,6 +133,31 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
       return null;
     };
 
+    // Imports an override dictionary of the form:
+    //
+    // { 'symbolID': '123',
+    //   '456': { 'symbolID': '789', ... },
+    //   ...  }
+    //
+    // This is necessary when importing override symbols that themselves have overrides
+    let deepImportOverrides = (dict, localToForeignSymbolIdMap) => {
+      if (dict.symbolID) {
+        let foreignSymbol = maybeImportForeignSymbolWithSymbolId(dict.symbolID);
+        if (foreignSymbol) {
+          // swap out the symbol ID that's local to the library for the symbol ID
+          // for the foreign symbol in the new document linked to the library
+          localToForeignSymbolIdMap[String(dict.symbolID)] =
+              String(foreignSymbol.symbolMaster().symbolID());
+        }
+      }
+
+      for (let k in dict) {
+        if (dict[k].symbolID) {
+          deepImportOverrides(dict[k], localToForeignSymbolIdMap);
+        }
+      }
+    };
+
     allSymbolInstances.forEach(symbolInstance => {
       let symbolId = symbolInstance.symbolID();
       let foreignSymbol = maybeImportForeignSymbolWithSymbolId(symbolId);
@@ -142,16 +167,9 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
 
       let localToForeignSymbolIdMap = {};
       for (let [overrideId, overrideDict] of Object.entries({...symbolInstance.overrides()})) {
-        if (overrideDict.symbolID) {
-          let foreignSymbol = maybeImportForeignSymbolWithSymbolId(overrideDict.symbolID);
-          if (foreignSymbol) {
-            // swap out the symbol ID that's local to the library for the symbol ID
-            // for the foreign symbol in the new document linked to the library
-            localToForeignSymbolIdMap[String(overrideDict.symbolID)] =
-                String(foreignSymbol.symbolMaster().symbolID());
-          }
-        }
+        deepImportOverrides(overrideDict, localToForeignSymbolIdMap);
       }
+
       symbolInstance.updateOverridesWithObjectIDMap(localToForeignSymbolIdMap);
     });
   }
