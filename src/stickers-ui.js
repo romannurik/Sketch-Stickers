@@ -179,8 +179,8 @@ export class StickersUI {
     let dummyDocData = MSDocumentData.alloc().init();
     dummyDocData.addBlankPage().addLayer(layer);
 
-    // import any symbols used in library
-    // TODO: for symbols in a different library, import from that library
+    // import any symbols used in library (either from the library itself or
+    // other libraries referenced from the library... i.e. nested libraries)
     libraries.replaceSymbolsInLayerWithLibrary(dummyDocData, layer, library);
 
     // initiate cocoa drag operation

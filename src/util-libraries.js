@@ -120,12 +120,20 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
     let allSymbolInstances =  util.getAllLayersMatchingPredicate(
         parentLayer, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
 
-    // TODO: for symbols in a library that's nested within the given library, import from
-    // that library instead of the given library
-
     let maybeImportForeignSymbolWithSymbolId = symbolId => {
       let librarySymbolMaster = library.document().symbolWithID(symbolId);
       if (librarySymbolMaster) {
+        if (librarySymbolMaster.foreignObject()) {
+          // the symbol in the target library is a foreign symbol from yet
+          // another library, just grab the MSForeignSymbol/MSForeignObject
+          // and add it to the target document
+          let foreignSymbol = librarySymbolMaster.foreignObject();
+          parentDocument.documentData().addForeignSymbol(foreignSymbol);
+          return foreignSymbol;
+        }
+
+        // the symbol in the target library is local to the library, import it
+        // from the library
         return importForeignSymbolCompat(librarySymbolMaster, library,
             parentDocument.documentData());
       }
@@ -177,7 +185,6 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
 
 
 /**
- * /**
  * Compatibility layer for importForeignSymbol_fromLibrary_intoDocument,
  * removed in Sketch 50.
  *
