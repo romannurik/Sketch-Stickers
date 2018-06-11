@@ -1,6 +1,7 @@
 # build artifacts
 web-dist
 _sandbox
+*.sketchplugin
 
 # npm
 node_modules
