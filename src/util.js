@@ -62,6 +62,17 @@ export function arrayFromNSArray(nsArray) {
 }
 
 
+/**
+ * Convert an NSDictionary-type object to a JS dict.
+ * As of Sketch 50.2, this is needed for some cases of symbol instance overrides
+ */
+export function dictFromNSDict(nsDict) {
+  let dict = {};
+  for (let key in nsDict) {
+    dict[key] = nsDict[key];
+  }
+  return dict;
+}
 
 
 /**

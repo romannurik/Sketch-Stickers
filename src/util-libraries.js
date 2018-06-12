@@ -20,9 +20,7 @@ import * as util from './util';
  * Imports the symbols in the given library into the current
  * document, and swaps any local symbols with the library versions.
  */
-export function swapLocalSymbolsWithLibrary(document, library) {
-  let librariesController = getLibrariesController();
-
+export function swapLocalSymbolsWithLibrary(document, library, {isInstanceActuallyUsed} = {}) {
   let symbolInfosByObjectId = {};
 
   // gather up a list of all available symbols in the library
@@ -36,7 +34,37 @@ export function swapLocalSymbolsWithLibrary(document, library) {
     };
   });
 
-  // gather up all symbol masters used on this page that are in the library
+  // create a list of all *used* symbols in this document
+  let usedSymbolIds = new Set([]);
+  let allSymbolInstances =  util.getAllLayersMatchingPredicate(
+      document, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
+
+  let markAllUsedSymbolIdsInDict = (dict) => {
+    if (dict.symbolID) {
+      usedSymbolIds.add(String(dict.symbolID));
+    }
+
+    for (let k in dict) {
+      if (dict[k].symbolID) {
+        markAllUsedSymbolIdsInDict(dict[k]);
+      }
+    }
+  };
+  
+  allSymbolInstances.forEach(symbolInstance => {
+    if (isInstanceActuallyUsed && !isInstanceActuallyUsed(symbolInstance)) {
+      return;
+    }
+
+    let symbolId = String(symbolInstance.symbolID());
+    usedSymbolIds.add(symbolId);
+    for (let [overrideId, overrideDict] of
+         Object.entries(util.dictFromNSDict(symbolInstance.overrides()))) {
+      markAllUsedSymbolIdsInDict(overrideDict);
+    }
+  });
+
+  // gather up all symbol masters used on this document that are in the library
   let symbolMastersToReplace = [];
   let allSymbolMasters = util.getAllLayersMatchingPredicate(document,
       NSPredicate.predicateWithFormat('className == %@', 'MSSymbolMaster'));
@@ -50,7 +78,7 @@ export function swapLocalSymbolsWithLibrary(document, library) {
     symbolMastersToReplace.push(symbolMaster);
 
     // if it's used in the doc, flag it for import
-    if (util.arrayFromNSArray(symbolMaster.allInstances()).length) {
+    if (usedSymbolIds.has(String(symbolMaster.symbolID()))) {
       symbolInfosByObjectId[objectId].shouldImport = true;
     }
   });
@@ -190,7 +218,8 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
       }
 
       let localToForeignSymbolIdMap = {};
-      for (let [overrideId, overrideDict] of Object.entries({...symbolInstance.overrides()})) {
+      for (let [overrideId, overrideDict] of
+           Object.entries(util.dictFromNSDict(symbolInstance.overrides()))) {
         deepImportOverrides(overrideDict, localToForeignSymbolIdMap);
       }
 
