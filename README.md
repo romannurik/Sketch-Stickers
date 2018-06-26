@@ -1,4 +1,4 @@
-![Stickers Icon](https://raw.githubusercontent.com/romannurik/Sketch-Stickers/master/assets/icon.png)
+![Stickers Icon](https://raw.githubusercontent.com/romannurik/Sketch-Stickers/master/assets/icon-menu.png)
 
 # Stickers plugin for Sketch
 
