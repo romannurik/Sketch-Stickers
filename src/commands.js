@@ -19,8 +19,14 @@ if (!global._babelPolyfill) {
 }
 
 import {StickersUI} from './stickers-ui.js';
+import * as util from './util';
 
 export function onShowStickers(context) {
   let window = new StickersUI(context);
   window.showHide();
+}
+
+export function onClearCache(context) {
+  util.rmdirRecursive(util.getPluginCachePath());
+  context.document.showMessage(`✅ Sticker library index cleared`);
 }

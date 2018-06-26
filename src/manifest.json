@@ -2,7 +2,7 @@
   "identifier" : "net.nurik.roman.sketch.stickers",
   "compatibleVersion": 49,
   "bundleVersion": 1,
-  "icon": "icon.png",
+  "icon": "icon-plugin.png",
   "commands": [
     {
       "script" : "./commands.js",
@@ -13,12 +13,24 @@
       "shortcut": "cmd shift \\",
       "identifier" : "show_stickers",
       "description" : "Show or hide the Stickers window.",
-      "icon" : "icon.png"
+      "icon" : "icon-menu.png"
+    },
+    {
+      "script" : "./commands.js",
+      "handlers": {
+        "run": "onClearCache"
+      },
+      "name" : "Clear Library Index",
+      "identifier" : "clear_cache",
+      "description" : "Clear the Stickers library index for troubleshooting purposes.",
+      "icon" : "icon-menu.png"
     }
   ],
   "menu": {
     "items": [
-      "show_stickers"
+      "show_stickers",
+      "-",
+      "clear_cache"
     ],
     "title": "Stickers"
   }

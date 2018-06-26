@@ -212,6 +212,15 @@ export function getPluginCachePath() {
 
 
 /**
+ * Deletes the given file or directory recursively (i.e. it and its
+ * subfolders).
+ */
+export function rmdirRecursive(path) {
+  NSFileManager.defaultManager().removeItemAtPath_error_(path, null);
+}
+
+
+/**
  * Give the CPU some breathing room.
  */
 export function unpeg() {
