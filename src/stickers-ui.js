@@ -188,6 +188,8 @@ export class StickersUI {
     // import any symbols used in library (either from the library itself or
     // other libraries referenced from the library... i.e. nested libraries)
     libraries.replaceSymbolsInLayerWithLibrary(dummyDocData, layer, library);
+    // same thing for shared text and layer styles (Sketch 50+)
+    libraries.replaceSharedStylesInLayerWithLibrary(dummyDocData, layer, library);
 
     // initiate cocoa drag operation
     let pbItem = NSPasteboardItem.new();
