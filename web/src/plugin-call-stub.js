@@ -39,6 +39,8 @@ const ACTIONS = {
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.fillText(`${sticker.width}x${sticker.height}`, sticker.width / 2, sticker.height / 2);
     let url = canvas.toDataURL();
+    // let subPath = sticker.imagePath.replace(/.*net.nurik.roman.sketch.stickers/, '');
+    // let url = '/real-sticker-cache/' + subPath;
     window[callbackName](stickerId, url);
   },
 
