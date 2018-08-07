@@ -55,10 +55,10 @@ export async function makeStickerIndexForLibraries({onProgress}) {
   for (let [i, lib] of libraries.entries()) {
     await util.unpeg();
 
-    // for this library, get the last modified date of the sketch file
-    let attrs = NSFileManager.defaultManager()
-        .attributesOfItemAtPath_error_(lib.sketchFilePath, null);
-    let modifiedDateMs = attrs ? attrs.fileModificationDate().timeIntervalSince1970() : 0;
+    // for this library, checksum the contents so we can later check if it's changed
+    // NOTE: performance should be pretty good for files a few MB in size
+    let fileHash = String(NSFileManager.defaultManager()
+        .contentsAtPath(lib.sketchFilePath).sha1AsString());
 
     let cachePath = path.join(util.getPluginCachePath(), lib.libraryId);
 
@@ -73,7 +73,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
     if (FORCE_REBULD ||
         !libraryIndex ||
         !libraryIndex.archiveVersion ||
-        libraryIndex.timestamp < modifiedDateMs ||
+        libraryIndex.fileHash !== fileHash ||
         (libraryIndex.formatVersion || 0) < INDEX_FORMAT_VERSION) {
       // need to rebuild the cached index
       let doc = util.loadDocFromSketchFile(lib.sketchFilePath);
@@ -87,7 +87,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
           JSON.stringify(Object.assign(libraryIndex, {
             archiveVersion: Number(MSArchiveHeader.metadataForNewHeader()['version']),
             formatVersion: INDEX_FORMAT_VERSION,
-            timestamp: modifiedDateMs + 1, // add a second to avoid precision issues
+            fileHash
           })),
           {encoding: 'utf8'});
     } else {
