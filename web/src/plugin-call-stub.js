@@ -24,6 +24,9 @@ const ACTIONS = {
   startDragging(id, rect) {
   },
 
+  addLibraryColors(libraryId) {
+  },
+
   requestLayerImageUrl(stickerId, callbackName) {
     let sticker = __getStickerById(stickerId);
     let canvas = document.createElement('canvas');
@@ -51,7 +54,7 @@ const ACTIONS = {
     // setTimeout(() => window[progressCallbackName](.9), 1000);
     // setTimeout(() => window[callbackName](STUB_STICKER_INDEX), 1500);
     setTimeout(() => window[callbackName](STUB_STICKER_INDEX), 0);
-  }
+  },
 };
 
 window['pluginCall'] = function pluginCall(action, ...args) {
