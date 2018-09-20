@@ -142,7 +142,7 @@ function replaceSymbolMaster(masterFrom, masterTo, overridesIdMapToUpdate = null
 export function getLibraryById(libraryId, {onlyEnabled = false} = {}) {
   return util.arrayFromNSArray(getLibrariesController().libraries())
       .filter(lib => onlyEnabled ? !!lib.enabled() : true)
-      .find(lib => String(lib.libraryID()) == libraryId);
+      .find(lib => String(lib.libraryID()) == String(libraryId));
 }
 
 
@@ -166,15 +166,32 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
         parentLayer, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
 
     let maybeImportForeignSymbolWithSymbolId = symbolId => {
+      // TODO: is this valid/useful?
+      // let existing = parentDocument.documentData().foreignSymbols()
+      //     .find(fs => String(fs.symbolMaster().symbolID()) == String(symbolId));
+      // if (existing) {
+      //   return existing;
+      // }
+
       let librarySymbolMaster = library.document().symbolWithID(symbolId);
       if (librarySymbolMaster) {
         if (librarySymbolMaster.foreignObject()) {
           // the symbol in the target library is a foreign symbol from yet
-          // another library, just grab the MSForeignSymbol/MSForeignObject
-          // and add it to the target document
+          // another library, try to import it from the other library, and if
+          // unavailable, grab the MSForeignSymbol/MSForeignObject
+          // and add it to the target document directly
           let foreignSymbol = librarySymbolMaster.foreignObject();
-          parentDocument.documentData().addForeignSymbol(foreignSymbol);
-          return foreignSymbol;
+          let nestedLibrary = getLibraryById(foreignSymbol.libraryID(), {onlyEnabled: true});
+          if (nestedLibrary) {
+            return importForeignSymbolCompat(librarySymbolMaster, nestedLibrary,
+                parentDocument.documentData());
+          } else {
+            parentDocument.documentData().addForeignSymbol(foreignSymbol);
+            // TODO: investigate what other dependencies we may need to bring in
+            // when calling addForeignSymbol() on a foreign symbol from another doc.
+            // likely we need to add other foreign symbols that this one relies on
+            return foreignSymbol;
+          }
         }
 
         // the symbol in the target library is local to the library, import it
