@@ -185,7 +185,7 @@ export class StickersUI {
    * Triggers the beginning of a drag operation on the given sticker ID
    */
   startDragging(libraryId, archiveVersion, stickerId, rect, srcView) {
-    let library = libraries.getLibraryById(libraryId);
+    let library = libraries.getLibraryById(libraryId, {onlyEnabled: true});
     let image = NSImage.alloc().initWithContentsOfFile(this.getStickerCachedImagePath(stickerId));
 
     // deserialize layer

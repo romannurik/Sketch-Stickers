@@ -139,8 +139,9 @@ function replaceSymbolMaster(masterFrom, masterTo, overridesIdMapToUpdate = null
  * Returns the MSAssetLibrary / MSUserAssetLibrary with the given library ID
  * (which is a UUID)
  */
-export function getLibraryById(libraryId) {
+export function getLibraryById(libraryId, {onlyEnabled = false} = {}) {
   return util.arrayFromNSArray(getLibrariesController().libraries())
+      .filter(lib => onlyEnabled ? !!lib.enabled() : true)
       .find(lib => String(lib.libraryID()) == libraryId);
 }
 
