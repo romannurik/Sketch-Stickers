@@ -35,6 +35,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
       .filter(lib => !!lib.locationOnDisk() && !!lib.enabled() && !!lib.libraryID())
       .map(lib => ({
         libraryId: String(lib.libraryID()),
+        name: String(lib.name()),
         sketchFilePath: String(lib.locationOnDisk().path()),
       }))
       // filter out duplicate library IDs
@@ -80,7 +81,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
       let doc = util.loadDocFromSketchFile(lib.sketchFilePath);
       doc.setFileURL(NSURL.fileURLWithPath(lib.sketchFilePath));
       libraryIndex = await buildStickerIndexForLibrary(
-          lib.libraryId, doc, childProgressReporters[i]);
+          lib.libraryId, lib.name, doc, childProgressReporters[i]);
 
       // store library colors
       const colors = doc.documentData().assets().colors();
@@ -111,7 +112,7 @@ export async function makeStickerIndexForLibraries({onProgress}) {
 /**
  * Builds the sticker index for the given library (libraryId and document).
  */
-async function buildStickerIndexForLibrary(libraryId, document, progressReporter) {
+async function buildStickerIndexForLibrary(libraryId, defaultLibName, document, progressReporter) {
   let libraryIndex = {id: libraryId, sections: []};
 
   let cachePath = path.join(util.getPluginCachePath(), libraryId);
@@ -234,7 +235,7 @@ async function buildStickerIndexForLibrary(libraryId, document, progressReporter
 
   libraryIndex.sections = nonEmptyItems(libraryIndex.sections);
 
-  libraryIndex.title = libraryIndex.title || util.getDocumentName(document);
+  libraryIndex.title = libraryIndex.title || defaultLibName || util.getDocumentName(document);
   return libraryIndex;
 }
 
