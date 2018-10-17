@@ -182,6 +182,7 @@ export function captureLayerImage(document, layer, destPath) {
       ).firstObject();
   exportRequest.format = 'png';
   exportRequest.scale = 2;
+  exportRequest.includeArtboardBackground = false;
   // exportRequest.shouldTrim = false;
   document.saveArtboardOrSlice_toFile_(exportRequest, destPath);
 }
