@@ -41,10 +41,17 @@ html {
   box-sizing: border-box;
   background: transparent;
   font-family: $fontStackBody;
-  color: $colorBlackSecondary;
+  color: var(--theme-color-fg-secondary);
 }
 
 body {
+  @include theme-light;
+
+  &[is-dark-theme] {
+    @include theme-dark;
+  }
+
+  background: var(--theme-color-bg);
   display: flex;
   flex-direction: column;
 
@@ -71,8 +78,8 @@ body {
   align-items: center;
 
   z-index: 10;
-  box-shadow: 0 1px 0 $colorThinBorder;
-  background-color: rgba(#fff, .85);
+  box-shadow: 0 1px 0 var(--theme-color-thin-border);
+  background-color: var(--theme-color-bg-floating-header);
   -webkit-backdrop-filter: blur(12px);
 
   grid-template-columns: calc(var(--left-keyline) - var(--side-margin)) 1fr;
@@ -85,7 +92,7 @@ body {
       display: none;
     }
 
-    color: $colorBlackTertiary;
+    color: var(--theme-color-fg-tertiary);
     display: flex;
     align-items: center;
     justify-self: flex-start;
@@ -106,7 +113,7 @@ body {
 
     &:hover,
     &:focus {
-      color: $colorBlackPrimary;
+      color: var(--theme-color-fg-primary);
     }
   }
 
@@ -125,7 +132,7 @@ body {
     &::after {
       @include material-icons;
       content: 'search';
-      color: $colorBlackSecondary;
+      color: var(--theme-color-fg-secondary);
       position: absolute;
       left: 12px;
       top: 50%;
@@ -142,19 +149,20 @@ body {
     height: 100%;
     border: 0;
     border-radius: 4px;
-    background-color: rgba(#000, .12);
+    background-color: var(--theme-color-search);
+    color: var(--theme-color-fg-primary);
     -webkit-appearance: none;
     padding: 0 0 0 40px;
     box-sizing: border-box;
     @include type-body-1;
 
     &:focus {
-      background-color: rgba(#000, .24);
+      background-color: var(--theme-color-search-active);
       outline: 0;
     }
 
     &::placeholder {
-      color: $colorBlackSecondary;
+      color: var(--theme-color-fg-secondary);
     }
   }
 }
@@ -173,7 +181,7 @@ body {
 
   padding: 16px var(--side-margin);
   background-color: rgba(#000, .04);
-  border-bottom: 1px solid $colorThinBorder;
+  border-bottom: 1px solid var(--theme-color-thin-border);
   display: flex;
   align-items: center;
 
@@ -195,12 +203,12 @@ body {
   &__title {
     @include type-headline-1;
     font-weight: 500;
-    color: $colorBlackSecondary;
+    color: var(--theme-color-fg-secondary);
   }
 
   &__subtitle {
     @include type-body-3;
-    color: $colorBlackSecondary;
+    color: var(--theme-color-fg-secondary);
   }
 
   &__colors-area {
@@ -226,7 +234,7 @@ body {
 
   &__add-colors {
     @include button(small, flat);
-    --color: #{$colorBlackPrimary};
+    --color: var(--theme-color-fg-primary);
   }
 
   &__colors-preview {
@@ -244,7 +252,7 @@ body {
 
   &__color-more {
     @include type-body-3;
-    color: $colorBlackSecondary;
+    color: var(--theme-color-fg-secondary);
     display: flex;
     align-items: center;
     padding: 0 4px;
@@ -260,7 +268,7 @@ body {
   align-items: stretch;
   flex-shrink: 0;
   padding: var(--root-section-vert-padding) 0 0 0;
-  border-bottom: 1px solid $colorThinBorder;
+  border-bottom: 1px solid var(--theme-color-thin-border);
 
   @include narrow {
     flex-direction: column;
@@ -274,13 +282,7 @@ body {
     top: 1px;
     bottom: 1px;
     width: $scrollFadeSize;
-    background-image: linear-gradient(to right,
-        rgba(#fff,1.00) 0%,
-        rgba(#fff,0.90) 30%,
-        rgba(#fff,0.67) 60%,
-        rgba(#fff,0.50) 75%,
-        rgba(#fff,0.33) 85%,
-        rgba(#fff,0.00) 100%);
+    background-image: var(--theme-gradient-fade-to-bg);
 
     @include narrow {
       display: none;
@@ -310,7 +312,7 @@ body {
 
   &__overline {
     @include type-body-4;
-    color: $colorBlackTertiary;
+    color: var(--theme-color-fg-tertiary);
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -319,13 +321,13 @@ body {
   &__title {
     @include type-headline-1;
     font-weight: 800;
-    color: $colorBlackPrimary;
+    color: var(--theme-color-fg-primary);
   }
 
   &__description {
     @include type-body-2;
     margin-top: 16px;
-    color: $colorBlackSecondary;
+    color: var(--theme-color-fg-secondary);
   }
 
   &__link {
@@ -383,7 +385,7 @@ body {
 }
 
 @mixin sticker-effects {
-  box-shadow: 0 0 0 1px $colorThinBorder inset;
+  box-shadow: 0 0 0 1px var(--theme-color-thin-border) inset;
 }
 
 @mixin sticker-no-effects {
@@ -399,7 +401,7 @@ body {
   &__title {
     @include type-body-1;
     margin-bottom: 16px;
-    color: $colorBlackPrimary;
+    color: var(--theme-color-fg-primary);
     font-weight: 500;
   }
 
@@ -451,7 +453,7 @@ body {
   &__caption {
     margin-top: 4px;
     @include type-body-3;
-    color: $colorBlackTertiary;
+    color: var(--theme-color-fg-tertiary);
   }
 
   &.has-background-color {
@@ -468,7 +470,7 @@ body {
 }
 
 .no-stickers {
-  @include zero-state-image('./images/zero-state@2x.png');
+  @include zero-state-image('zero-state');
 }
 
 .search-empty {
@@ -478,7 +480,7 @@ body {
     display: flex;
   }
 
-  @include zero-state-image('./images/no-results@2x.png');
+  @include zero-state-image('no-results');
 }
 
 body.has-active-search [data-search-match="none"] {
@@ -527,7 +529,7 @@ body > *:first-child::after {
     }
   }
 
-  @include zero-state-image('./images/indexing@2x.png');
+  @include zero-state-image('indexing');
 
   $progressThickness: 4px;
 
@@ -537,7 +539,7 @@ body > *:first-child::after {
     height: $progressThickness;
     width: 160px;
     // border-radius: 1000px; // during transition, this isn't applied... so just kill it for now
-    background-color: #eee;
+    background-color: var(--theme-color-bg-level-2);
     // overflow: hidden;
   }
 
@@ -547,7 +549,7 @@ body > *:first-child::after {
     top: 0;
     width: calc(100% - #{$progressThickness} * 2);
     height: 100%;
-    background-color: $colorAccent;
+    background-color: var(--theme-color-accent);
     transform-origin: 0% 0%;
     transform: scaleX(0);
     transition: transform .5s cubic-bezier(.25, .25, 0, 1);

@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-@mixin button($size: small, $level: secondary, $color: $colorAccent) {
+@mixin button($size: small,
+              $level: secondary,
+              $color: var(--theme-color-button),
+              $colorHover: var(--theme-color-button-hover),
+              $colorActive: var(--theme-color-button-active),
+              $colorFg: var(--theme-color-button-fg)) {
   --color: #{$color};
   display: flex;
   align-items: center;
@@ -53,38 +58,38 @@
     &:hover,
     &:focus,
     &:active {
-      color: #fff;
+      color: $colorFg;
       background-color: var(--color);
     }
 
     &:focus,
     &:active {
-      --color: #{darken($color, 10%)};
+      --color: #{$colorHover};
     }
   }
   @else if $level == flat {
     background-color: transparent;
 
     &:hover {
-      --color: #{darken($color, 10%)};
+      --color: #{$colorHover};
     }
 
     &:focus,
     &:active {
-      --color: #{darken($color, 20%)};
+      --color: #{$colorActive};
     }
   }
   @else if $level == primary {
-    color: #fff;
+    color: $colorFg;
     background-color: var(--color);
 
     &:hover {
-      --color: #{darken($color, 10%)};
+      --color: #{$colorHover};
     }
 
     &:focus,
     &:active {
-      --color: #{darken($color, 20%)};
+      --color: #{$colorActive};
     }
   }
 }

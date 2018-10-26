@@ -26,7 +26,7 @@
 
   &__text {
     @include type-headline-2;
-    color: $colorBlackTertiary;
+    color: var(--theme-color-fg-tertiary);
     margin-top: 40px;
     max-width: 400px;
     text-align: center;
@@ -34,7 +34,7 @@
     em {
       font-style: normal;
       font-weight: 500;
-      color: $colorBlackPrimary;
+      color: var(--theme-color-fg-primary);
     }
   }
 
@@ -44,13 +44,21 @@
   }
 }
 
-@mixin zero-state-image($src) {
+@mixin zero-state-image($name) {
   .zero-state__image {
+    $src: #{'./images/' + $name + '@2x.png'};
     background-image: url($src);
     background-size: cover;
     background-position: 50% 50%;
     width: 100%;
     max-width: image-width($src) / 2;
     height: image-height($src) / 2;
+
+    body[is-dark-theme] & {
+      $src: #{'./images/' + $name + '-dark@2x.png'};
+      background-image: url($src);
+      max-width: image-width($src) / 2;
+      height: image-height($src) / 2;
+    }
   }
 }

@@ -16,11 +16,55 @@
 
 $fontStackBody: -apple-system, BlinkMacSystemFont;
 
-$colorBlackPrimary: rgba(#000, .87);
-$colorBlackSecondary: rgba(#000, .54);
-$colorBlackTertiary: rgba(#000, .38);
-$colorThinBorder: rgba(#000, .12);
-$colorAccent: #3D5AFE;
+@function make-soft-gradient-color-to-transparent($color) {
+  @return linear-gradient(to right,
+      rgba($color, 1.00) 0%,
+      rgba($color, 0.90) 30%,
+      rgba($color, 0.67) 60%,
+      rgba($color, 0.50) 75%,
+      rgba($color, 0.33) 85%,
+      rgba($color, 0.00) 100%);
+}
+
+@mixin theme-light {
+  $__bg: #fff;
+  $__accent: #3D5AFE;
+  --theme-color-bg: #{$__bg};
+  --theme-color-bg-level-2: #{darken($__bg, 10%)};
+  --theme-color-bg-floating-header: #{rgba($__bg, .85)};
+  --theme-color-fg-primary: #{rgba(#000, .87)};
+  --theme-color-fg-secondary: #{rgba(#000, .54)};
+  --theme-color-fg-tertiary: #{rgba(#000, .38)};
+  --theme-color-thin-border: #{rgba(#000, .12)};
+  --theme-color-accent: #{$__accent};
+  --theme-color-button: #{$__accent};
+  --theme-color-button-hover: #{darken($__accent, 10%)};
+  --theme-color-button-active: #{darken($__accent, 20%)};
+  --theme-color-button-fg: #fff;
+  --theme-color-search: #{rgba(#000, .12)};
+  --theme-color-search-active: #{rgba(#000, .24)};
+  --theme-gradient-fade-to-bg: #{make-soft-gradient-color-to-transparent($__bg)};
+}
+
+@mixin theme-dark {
+  $__bg: #202124;
+  $__accent: #536DFE;
+  --theme-color-bg: #{$__bg};
+  --theme-color-bg-level-2: #{lighten($__bg, 10%)};
+  --theme-color-bg-floating-header: #{rgba($__bg, .75)};
+  --theme-color-fg-primary: #fff;
+  --theme-color-fg-secondary: #{rgba(#fff, .7)};
+  --theme-color-fg-tertiary: #{rgba(#fff, .5)};
+  --theme-color-thin-border: #{rgba(#fff, .2)};
+  --theme-color-accent: #{$__accent};
+  --theme-color-button: #{lighten($__accent, 10%)};
+  --theme-color-button-hover: #{lighten($__accent, 15%)};
+  --theme-color-button-active: #{lighten($__accent, 20%)};
+  --theme-color-button-fg: #000;
+  --theme-color-search: #{rgba(#fff, .2)};
+  --theme-color-search-active: #{rgba(#fff, .3)};
+  --theme-gradient-fade-to-bg: #{make-soft-gradient-color-to-transparent($__bg)};
+}
 
 @mixin narrow {
   @media only screen and (max-width: 440px) {
