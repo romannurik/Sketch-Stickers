@@ -26,6 +26,8 @@ import {makeStickerIndexForLibraries} from './sticker-index';
 
 const THREAD_DICT_KEY = 'stickers.BrowserWindow';
 const UI_MODE = 'cover';
+const DARK_MODE = (NSAppKitVersionNumber >= 1671 &&
+    'Dark' === String(NSUserDefaults.standardUserDefaults().stringForKey('AppleInterfaceStyle')));
 
 
 export class StickersUI {
@@ -107,14 +109,17 @@ export class StickersUI {
       this.browserWindow._panel.setFrame_display_animate_(docWindow.frame(), false, false);
       this.browserWindow._panel.setHidesOnDeactivate(false);
     }
-    this.browserWindow.once('ready-to-show', () => this.browserWindow.show());
+    this.browserWindow.once('ready-to-show', () => {
+      this.browserWindow.show();
+      if (UI_MODE == 'cover') {
+        docWindow.addChildWindow_ordered_(this.browserWindow._panel, NSWindowAbove);
+      }
+    });
+
     this.browserWindow.loadURL(String(
         this.context.plugin.urlForResourceNamed('index.html') +
-        `?uiMode=${UI_MODE}`));
+        `?uiMode=${UI_MODE}&darkMode=${DARK_MODE ? 1 : 0}`));
 
-    if (UI_MODE == 'cover') {
-      docWindow.addChildWindow_ordered_(this.browserWindow._panel, NSWindowAbove);
-    }
     this.setPersistedObj(this.browserWindow);
   }
 
@@ -209,12 +214,12 @@ export class StickersUI {
     libraries.replaceSharedStylesInLayerWithLibrary(dummyDocData, layer, library);
 
     // initiate cocoa drag operation
-    let pbItem = NSPasteboardItem.new();
-    pbItem.setDataProvider_forTypes_(
-        srcView,
-        NSArray.arrayWithObject(NSPasteboardTypePNG));
-    let dragItem = NSDraggingItem.alloc().initWithPasteboardWriter(pbItem);
-    pbItem.release();
+    // let pbItem = NSPasteboardItem.new();
+    // pbItem.setData_forType_(
+    //     image.TIFFRepresentation(),
+    //     NSPasteboardTypePNG);
+    let dragItem = NSDraggingItem.alloc().initWithPasteboardWriter(image);
+    // pbItem.release();
     dragItem.setDraggingFrame_contents_(
         NSMakeRect(rect.x, rect.y, rect.width, rect.height),
         image);

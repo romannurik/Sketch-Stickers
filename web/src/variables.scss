@@ -43,6 +43,7 @@ $fontStackBody: -apple-system, BlinkMacSystemFont;
   --theme-color-button-fg: #fff;
   --theme-color-search: #{rgba(#000, .12)};
   --theme-color-search-active: #{rgba(#000, .24)};
+  --theme-color-search-highlight: #FBBC04;
   --theme-gradient-fade-to-bg: #{make-soft-gradient-color-to-transparent($__bg)};
 }
 
@@ -63,6 +64,7 @@ $fontStackBody: -apple-system, BlinkMacSystemFont;
   --theme-color-button-fg: #000;
   --theme-color-search: #{rgba(#fff, .2)};
   --theme-color-search-active: #{rgba(#fff, .3)};
+  --theme-color-search-highlight: #F29900;//#EA8600;
   --theme-gradient-fade-to-bg: #{make-soft-gradient-color-to-transparent($__bg)};
 }
 

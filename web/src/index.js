@@ -79,6 +79,9 @@ class StickersPage {
   setupCoreUi() {
     $(document.body).attr('ui-mode',
         (window.location.search.match(/uiMode=(\w+)/) || [])[1] || 'cover');
+    if (window.location.search.match(/darkMode=1/)) {
+      $(document.body).attr('is-dark-theme', '1');
+    }
     $('.header-area__back-button').click(() => StickersClient.close());
     $(document).on('contextmenu', e => e.preventDefault());
     $(document).on('click', 'a[href]', ev => {
