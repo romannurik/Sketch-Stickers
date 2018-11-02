@@ -17,7 +17,7 @@
 // some default styles to make the view more native like
 
 @import './lib/embedded-ui';
-@import './lib/iconfont';
+@import './lib/svg-icons';
 
 @import './variables';
 
@@ -67,6 +67,12 @@ body {
   }
 }
 
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .header-area {
   position: fixed;
   left: 0;
@@ -104,11 +110,11 @@ body {
     outline: none;
     @include type-body-1;
 
-    &::before {
-      @include material-icons;
-      content: 'arrow_back_ios';
-      font-size: 16px;
-      margin-right: 4px;
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+      margin-left: -4px;
+      margin-right: 8px;
     }
 
     &:hover,
@@ -129,9 +135,7 @@ body {
       justify-self: stretch;
     }
 
-    &::after {
-      @include material-icons;
-      content: 'search';
+    .svg-icon {
       color: var(--theme-color-fg-secondary);
       position: absolute;
       left: 12px;
@@ -224,10 +228,9 @@ body {
     align-items: center;
     @include type-body-3;
 
-    &::before {
-      @include material-icons;
-      content: 'check';
-      font-size: 16px;
+    .svg-icon {
+      width: 16px;
+      height: 16px;
       margin-right: 4px;
     }
   }
@@ -435,18 +438,32 @@ body {
   display: flex;
   flex-direction: column;
 
+  &:not([data-loaded]) &__thumb-container {
+    background-color: var(--theme-color-bg-level-2);
+  }
+
+  &:not([data-loaded]) &__thumb {
+    opacity: 0;
+  }
+
+  &__thumb-container {
+    display: flex;
+    background-color: transparent;
+    transition: background-color .1s ease;
+  }
+
   &__thumb {
     // @include sticker-effects;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: 50% 50%;
-    width: 100%;
-    height: 100%;
+    object-fit: contain;
     cursor: pointer;
-    transition: transform .1s ease;
+    background-color: transparent;
+    transition: transform .1s ease, opacity .1s ease;
+    opacity: 1;
 
     &:hover {
-      transform: scale(1.03);
+      //transform: scale(1.03);
+      opacity: .85;
+      transform: translateY(-2px);
     }
   }
 
@@ -500,33 +517,15 @@ body.has-active-search [data-search-match="direct"] > .sticker__caption {
   border-radius: 4px;
 }
 
-body[is-loading] > * {
-  display: none;
-}
-
-body > *:first-child::after {
-  // trigger iconfont loading
-  @include material-icons;
-  content: 'arrow_back';
-  opacity: 0;
-  position: absolute;
-  left: -100px;
-  top: -100px;
-}
-
 .page-loading {
-  display: none;
+  display: flex;
 
-  body[is-loading] & {
-    display: flex;
+  animation: page-load-appear .7s ease .2s;
+  animation-fill-mode: backwards;
 
-    animation: page-load-appear .7s ease .2s;
-    animation-fill-mode: backwards;
-
-    @keyframes page-load-appear {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+  @keyframes page-load-appear {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @include zero-state-image('indexing');
@@ -539,7 +538,7 @@ body > *:first-child::after {
     height: $progressThickness;
     width: 160px;
     // border-radius: 1000px; // during transition, this isn't applied... so just kill it for now
-    background-color: var(--theme-color-bg-level-2);
+    background-color: var(--theme-color-bg-level-3);
     // overflow: hidden;
   }
 

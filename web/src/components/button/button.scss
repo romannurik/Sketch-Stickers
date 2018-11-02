@@ -35,8 +35,9 @@
     @include type-body-3;
     padding: 6px 12px;
 
-    .material-icons {
-      font-size: 20px;
+    .svg-icon {
+      width: 20px;
+      height: 20px;
     }
   }
   @else if $size == large {
@@ -44,10 +45,10 @@
     padding: 10px 16px;
   }
 
-  .material-icons:first-child:not(:last-child) {
+  .svg-icon:first-child:not(:last-child) {
     margin-right: 4px;
   }
-  .material-icons:last-child:not(:first-child) {
+  .svg-icon:last-child:not(:first-child) {
     margin-left: 4px;
   }
 

@@ -24,29 +24,44 @@ import Vue from 'vue';
 import ElementVisibility from './lib/element-visibility';
 import StickersClient from './client';
 
+
+// load icons
+const requireAll = r => r.keys().map(r);
+requireAll(require.context('!svg-sprite-loader!./icons/', false, /.*\.svg$/))
+    .map(m => m.default)
+    .reduce((acc, icon) => ({
+      ...acc,
+      [icon.id]: icon
+    }), {});
+
+
+// consts
 const MAX_DRAW_WIDTH = 300;
 const MAX_DRAW_HEIGHT = 400;
 
+
+// page controller
 class StickersPage {
   constructor() {
     this.setupCoreUi();
-    this.setupSearchUi();
+    this.setupStickersUi();
     StickersClient.init();
-    StickersClient.on('load-progress', f => this.showLoadProgress(f));
+    StickersClient.on('load-progress', f => this.vue.indexLoadProgress = f);
     StickersClient.once('loaded', stickerIndex => {
-      this.stickerIndex = stickerIndex;
-      this.processStickerIndex();
-      this.setupStickersUi();
-      $(document.body).removeAttr('is-loading');
-      setTimeout(() => $('.header-area__search-field').focus(), 0);
+      this.processStickerIndex(stickerIndex);
+      this.vue.stickerIndex = stickerIndex;
+      this.vue.$nextTick(() => {
+        $('.header-area__search-field').focus();
+        this.loadVisibleStickers();
+      });
     });
   }
 
-  processStickerIndex() {
-    this.stickerIndex.libraries = this.stickerIndex.libraries
+  processStickerIndex(stickerIndex) {
+    stickerIndex.libraries = stickerIndex.libraries
         .filter(lib => !!lib.sections.length);
 
-    for (let library of this.stickerIndex.libraries) {
+    for (let library of stickerIndex.libraries) {
       for (let section of library.sections) {
         section.rows = [];
         let currentRow = null;
@@ -72,82 +87,21 @@ class StickersPage {
     }
   }
 
-  showLoadProgress(f) {
-    $('.page-loading__progress').css('transform', `scaleX(${f})`);
-  }
-
   setupCoreUi() {
     $(document.body).attr('ui-mode',
         (window.location.search.match(/uiMode=(\w+)/) || [])[1] || 'cover');
+
     if (window.location.search.match(/darkMode=1/)) {
       $(document.body).attr('is-dark-theme', '1');
     }
-    $('.header-area__back-button').click(() => StickersClient.close());
+
     $(document).on('contextmenu', e => e.preventDefault());
     $(document).on('click', 'a[href]', ev => {
       let url = $(ev.target).attr('href');
       StickersClient.openUrl(url);
       ev.preventDefault();
     });
-  }
 
-  setupSearchUi() {
-    let updateSearch = () => {
-      this.vueGlobal.searchText = $searchField.val();
-      // TODO: move this to a watcher in vueGlobal
-      this.vueGlobal.$nextTick(() => {
-        $(document.body).toggleClass('has-active-search', !!this.vueGlobal.searchText);
-        ['.sticker-root-section', '.sticker-sub-section', '.sticker'].forEach(level => {
-          let $allAtLevel = $(level); // select all at this level
-          $allAtLevel.each((_, el) => {
-            let hasAnyHighlights = !!$(el).find('.search-highlight').length;
-            let hasDirectHighlights = !!$(el).find(`${level}__hilitext .search-highlight`).length;
-            if (hasDirectHighlights) {
-              $(el).attr('data-search-match', 'direct');
-            } else if (hasAnyHighlights) {
-              $(el).attr('data-search-match', 'indirect');
-            } else {
-              $(el).attr('data-search-match', 'none');
-            }
-          });
-        });
-        $(document.body).toggleClass('no-search-results',
-            !$('.sticker-root-section[data-search-match!="none"]').length);
-        this.loadVisibleStickers();
-      });
-    };
-
-    let $searchField = $('.header-area__search-field');
-    $searchField.on('input', () => {
-      $(window).scrollTop(0);
-      updateSearch();
-    });
-    $searchField.on('keydown', (ev) => {
-      if (ev.keyCode == 27) {
-        if ($searchField.val()) {
-          ev.preventDefault();
-          $searchField.val('');
-          updateSearch();
-        }
-      }
-    });
-  }
-
-  calcDrawSize(sticker) {
-    // fit the sticker into a max width and height, keeping its aspect ratio
-    let size = { width: sticker.width, height: sticker.height };
-    if (size.width > MAX_DRAW_WIDTH) {
-      size.height = size.height * MAX_DRAW_WIDTH / size.width;
-      size.width = MAX_DRAW_WIDTH;
-    }
-    if (size.height > MAX_DRAW_HEIGHT) {
-      size.width = size.width * MAX_DRAW_HEIGHT / size.height;
-      size.height = MAX_DRAW_HEIGHT;
-    }
-    return size;
-  }
-
-  setupStickersUi() {
     var me = this;
 
     this.vueGlobal = new Vue({
@@ -174,6 +128,11 @@ class StickersPage {
       }
     });
 
+    Vue.component('svg-icon', {
+      template: `<svg class="svg-icon"><use :xlink:href="'#' + glyph" /></svg>`,
+      props: ['glyph'],
+    });
+
     Vue.component('sticker', {
       props: ['sticker', 'parentSection'],
       template: '#sticker-template',
@@ -184,19 +143,76 @@ class StickersPage {
       },
     });
 
-    this.stickersVue = new Vue({
-      el: '.stickers-area',
+    this.vue = new Vue({
+      el: '.root',
       data: {
-        stickerIndex: this.stickerIndex,
+        indexLoadProgress: 0,
+        stickerIndex: null,
       },
       methods: {
         addLibraryColors(library) {
           StickersClient.addLibraryColors(library.id);
           library.colorsAdded = true;
-        }
+        },
+        closeWindow() {
+          StickersClient.close();
+        },
+        onSearchKeydown(ev) {
+          if (ev.keyCode == 27) {
+            if (ev.target.value) {
+              ev.preventDefault();
+              ev.target.value = '';
+              me.updateSearch();
+            }
+          }
+        },
+        onSearchInput(ev) {
+          $(window).scrollTop(0);
+          me.updateSearch();
+        },
       },
     });
+  }
 
+  updateSearch() {
+    // TODO: move this to a watcher in vueGlobal
+    this.vue.$nextTick(() => {
+      $(document.body).toggleClass('has-active-search', !!this.vueGlobal.searchText);
+      ['.sticker-root-section', '.sticker-sub-section', '.sticker'].forEach(level => {
+        let $allAtLevel = $(level); // select all at this level
+        $allAtLevel.each((_, el) => {
+          let hasAnyHighlights = !!$(el).find('.search-highlight').length;
+          let hasDirectHighlights = !!$(el).find(`${level}__hilitext .search-highlight`).length;
+          if (hasDirectHighlights) {
+            $(el).attr('data-search-match', 'direct');
+          } else if (hasAnyHighlights) {
+            $(el).attr('data-search-match', 'indirect');
+          } else {
+            $(el).attr('data-search-match', 'none');
+          }
+        });
+      });
+      $(document.body).toggleClass('no-search-results',
+          !$('.sticker-root-section[data-search-match!="none"]').length);
+      this.loadVisibleStickers();
+    });
+  }
+
+  calcDrawSize(sticker) {
+    // fit the sticker into a max width and height, keeping its aspect ratio
+    let size = { width: sticker.width, height: sticker.height };
+    if (size.width > MAX_DRAW_WIDTH) {
+      size.height = size.height * MAX_DRAW_WIDTH / size.width;
+      size.width = MAX_DRAW_WIDTH;
+    }
+    if (size.height > MAX_DRAW_HEIGHT) {
+      size.width = size.width * MAX_DRAW_HEIGHT / size.height;
+      size.height = MAX_DRAW_HEIGHT;
+    }
+    return size;
+  }
+
+  setupStickersUi() {
     $(document).on('mousedown', '.sticker__thumb', ev => {
       let stickerId = $(ev.target).parents('.sticker').attr('data-sticker-id');
       let rect = $(ev.target).get(0).getBoundingClientRect();
@@ -221,8 +237,9 @@ class StickersPage {
   loadVisibleStickers() {
     this.fetchedImages = this.fetchedImages || new Set();
     $('.sticker').each((index, el) => {
-      let stickerId = $(el).attr('data-sticker-id');
-      if ($(el).attr('data-loaded')) {
+      let $el = $(el);
+      let stickerId = $el.attr('data-sticker-id');
+      if ($el.attr('data-loaded')) {
         return;
       }
 
@@ -232,8 +249,9 @@ class StickersPage {
 
       this.fetchedImages.add(stickerId);
       StickersClient.getStickerImageUrl(stickerId).then(url => {
-        $(el).attr('data-loaded', true);
-        $(el).find('.sticker__thumb').css('background-image', `url(${url})`);
+        $el.find('.sticker__thumb').attr('src', url).one('load', () => {
+          $el.attr('data-loaded', true);
+        });
       });
     });
   }
