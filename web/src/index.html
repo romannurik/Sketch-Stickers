@@ -26,6 +26,7 @@
 
     <div class="stickers-area" v-if="stickerIndex">
       <div v-for="library in stickerIndex.libraries"
+          v-if="!library._hide"
           class="sticker-library-container"
           :key="library.id">
         <div class="sticker-library-header">
@@ -56,6 +57,7 @@
           </div>
         </div>
         <div v-for="section in library.sections"
+            v-if="!section._hide"
             :key="section.id"
             class="sticker-root-section"
             v-bind:layout="section.layout || 'default'">
@@ -68,8 +70,8 @@
             </a>
           </div>
           <div class="sticker-root-section__content">
-            <div class="sticker-root-section__content-row" v-for="row in section.rows">
-              <template v-for="item in row.items">
+            <div class="sticker-root-section__content-row" v-for="row in section.rows" v-if="!row._hide">
+              <template v-for="item in row.items" v-if="!item._hide">
                 <div v-if="item.type == 'section'" v-bind:layout="item.layout || 'default'" class="sticker-sub-section">
                   <!-- subsections treated as columns -->
                   <hilitext class="sticker-sub-section__title sticker-sub-section__hilitext" v-bind:text="item.title"></hilitext>
@@ -82,7 +84,10 @@
                       v-bind:style="{'background-color': item.background}">
                     <sticker
                         v-bind:parent-section="item"
-                        v-for="subItem in item.items" :key="subItem.id" v-bind:sticker="subItem"></sticker>
+                        v-for="subItem in item.items"
+                        v-if="!subItem._hide"
+                        :key="subItem.id"
+                        v-bind:sticker="subItem"></sticker>
                   </div>
                 </div>
                 <template v-if="item.type == 'layer'">

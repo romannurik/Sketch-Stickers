@@ -47,9 +47,8 @@ class StickersPage {
     this.setupStickersUi();
     StickersClient.init();
     StickersClient.on('load-progress', f => this.vue.indexLoadProgress = f);
-    StickersClient.once('loaded', stickerIndex => {
-      this.processStickerIndex(stickerIndex);
-      this.vue.stickerIndex = stickerIndex;
+    StickersClient.once('loaded', rawStickerIndex => {
+      this.vue.stickerIndex = this.processRawStickerIndex(rawStickerIndex);
       this.vue.$nextTick(() => {
         $('.header-area__search-field').focus();
         this.loadVisibleStickers();
@@ -57,7 +56,7 @@ class StickersPage {
     });
   }
 
-  processStickerIndex(stickerIndex) {
+  processRawStickerIndex(stickerIndex) {
     stickerIndex.libraries = stickerIndex.libraries
         .filter(lib => !!lib.sections.length);
 
@@ -85,6 +84,8 @@ class StickersPage {
         }
       }
     }
+
+    return stickerIndex;
   }
 
   setupCoreUi() {
@@ -112,6 +113,14 @@ class StickersPage {
 
     Vue.prototype.$globals = this.vueGlobal;
 
+    function hiliteReplacer_() {
+      return Array.from(arguments).slice(1, -2)
+          .map((s, i) => i % 2 == 0
+              ? `<span class="search-highlight">${s}</span>`
+              : s)
+          .join('');
+    }
+
     Vue.component('hilitext', {
       template: `<div v-html="highlight(text, $globals.searchText)"></div>`,
       props: ['text'],
@@ -121,9 +130,7 @@ class StickersPage {
             return text;
           }
 
-          return String(text || '').replace(
-              new RegExp(query, 'ig'),
-              matchedText => `<span class="search-highlight">${matchedText}</span>`);
+          return String(text || '').replace(this.regexForSearchText(query), hiliteReplacer_);
         }
       }
     });
@@ -161,7 +168,7 @@ class StickersPage {
           if (ev.keyCode == 27) {
             if (ev.target.value) {
               ev.preventDefault();
-              ev.target.value = '';
+              me.vueGlobal.searchText = '';
               me.updateSearch();
             }
           }
@@ -174,27 +181,82 @@ class StickersPage {
     });
   }
 
+  regexForSearchText(query) {
+    return new RegExp((query || '')
+        .replace(/^\s+|\s+$/g, '')
+        .split(/\s+/)
+        .map(s => `(${s})`)
+        .join('(.*?)'), 'ig');
+  }
+
   updateSearch() {
     // TODO: move this to a watcher in vueGlobal
     this.vue.$nextTick(() => {
-      $(document.body).toggleClass('has-active-search', !!this.vueGlobal.searchText);
-      ['.sticker-root-section', '.sticker-sub-section', '.sticker'].forEach(level => {
-        let $allAtLevel = $(level); // select all at this level
-        $allAtLevel.each((_, el) => {
-          let hasAnyHighlights = !!$(el).find('.search-highlight').length;
-          let hasDirectHighlights = !!$(el).find(`${level}__hilitext .search-highlight`).length;
-          if (hasDirectHighlights) {
-            $(el).attr('data-search-match', 'direct');
-          } else if (hasAnyHighlights) {
-            $(el).attr('data-search-match', 'indirect');
-          } else {
-            $(el).attr('data-search-match', 'none');
+      const re = this.regexForSearchText(this.vueGlobal.searchText);
+      const findIn = s => this.vueGlobal.searchText ? (s || '').search(re) >= 0 : true;
+
+      const visitItem = item => {
+        let found = false;
+        if (item.items) {
+          // section
+          for (const subItem of item.items) {
+            if (visitItem(subItem)) {
+              found = true;
+            }
           }
-        });
+          if (findIn(item.title) || findIn(item.description)) {
+            found = true;
+            visitUnhide(item);
+          }
+
+        } else {
+          // sticker
+          found = findIn(item.name);
+        }
+
+        item._hide = !found;
+        return found;
+      };
+
+      const visitUnhide = item => {
+        if (item.items) {
+          for (const subItem of item.items) {
+            visitUnhide(subItem);
+          }
+        }
+
+        item._hide = false;
+      };
+
+      let anyResults = false;
+      for (const library of this.vue.stickerIndex.libraries) {
+        let foundInLibrary = false;
+        for (const section of library.sections) {
+          let found;
+          for (const row of section.rows) {
+            if (visitItem(row)) {
+              found = true;
+            }
+          }
+          if (findIn(section.title) || findIn(section.description)) {
+            found = true;
+            for (const row of section.rows) {
+              visitUnhide(row);
+            }
+          }
+          section._hide = !found;
+          anyResults = anyResults || found;
+          foundInLibrary = foundInLibrary || found;
+        }
+        library._hide = !foundInLibrary;
+      }
+
+      this.vue.$forceUpdate();
+      $(document.body).toggleClass('has-active-search', !!this.vueGlobal.searchText);
+      $(document.body).toggleClass('no-search-results', !anyResults);
+      this.vue.$nextTick(() => {
+        this.loadVisibleStickers();
       });
-      $(document.body).toggleClass('no-search-results',
-          !$('.sticker-root-section[data-search-match!="none"]').length);
-      this.loadVisibleStickers();
     });
   }
 

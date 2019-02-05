@@ -179,10 +179,6 @@ body {
 }
 
 .sticker-library-header {
-  body.has-active-search & {
-    display: none;
-  }
-
   padding: 16px var(--side-margin);
   background-color: rgba(#000, .04);
   border-bottom: 1px solid var(--theme-color-thin-border);
