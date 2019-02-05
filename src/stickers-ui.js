@@ -26,9 +26,11 @@ import {makeStickerIndexForLibraries} from './sticker-index';
 
 const THREAD_DICT_KEY = 'stickers.BrowserWindow';
 const UI_MODE = 'cover';
+// MSTheme.sharedTheme().isDark()
 const DARK_MODE = (NSAppKitVersionNumber >= 1671 &&
     'Dark' === String(NSUserDefaults.standardUserDefaults().stringForKey('AppleInterfaceStyle')));
 
+const BUILD_SKETCH_53_BETA_1 = 71402;
 
 export class StickersUI {
   constructor(context) {
@@ -132,7 +134,12 @@ export class StickersUI {
           {onProgress: progress => this.runWebCallback(progressCallbackName, progress)})
           .then(stickerIndex => {
             stickerIndex.libraries.forEach(libraryIndex => {
-              if (libraryIndex.colors) {
+              libraryIndex.colorsAvailable = libraryIndex.colors && libraryIndex.colors.length;
+              if (MSArchiveHeader.metadataForNewHeader().build >= BUILD_SKETCH_53_BETA_1) {
+                // no need to do this in Sketch 53
+                libraryIndex.colorsAvailable = false;
+              }
+              if (libraryIndex.colorsAvailable) {
                 libraryIndex.colorsAdded = colorUtil.areAllLibraryColorsInDocument(
                     libraryIndex.colors, this.context.document);
               }

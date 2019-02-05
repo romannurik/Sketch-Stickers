@@ -84,7 +84,13 @@ export async function makeStickerIndexForLibraries({onProgress}) {
           lib.libraryId, lib.name, doc, childProgressReporters[i]);
 
       // store library colors
-      const colors = doc.documentData().assets().colors();
+      const assets = doc.documentData().assets();
+      let colors = [];
+      if (assets.colorAssets) {
+        colors = Array.from(assets.colorAssets()).map(ca => ca.color());
+      } else if (assets.colors) {
+        colors = assets.colors();
+      }
       if (colors.length) {
         libraryIndex.colors = Array.from(colors).map(c => colorUtil.msColorToSVGColor(c));
       }

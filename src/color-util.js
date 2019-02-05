@@ -8,7 +8,9 @@ export function areAllLibraryColorsInDocument(libSvgColors, document) {
 
   // collect all colors currently in this doc that aren't in the
   // target colors and save them, to add back at the end
-  let existingColors = Array.from(assets.colors());
+  let existingColors = assets.colorAssets
+      ? Array.from(assets.colorAssets()).map(ca => ca.color())
+      : Array.from(assets.colors());
   let libColorsInDoc = libMSColors
       .filter(libColor => existingColors.find(docColor => docColor.isEqual(libColor)));
   return libColorsInDoc.length == libMSColors.length;
@@ -20,6 +22,7 @@ export function areAllLibraryColorsInDocument(libSvgColors, document) {
  * colors.
  */
 export function addLibraryColorsToDocument(libSvgColors, document) {
+  // TODO: error out on Sketch 53
   let assets = document.documentData().assets();
   let libMSColors = libSvgColors.map(c => svgColorToMSColor(c));
 

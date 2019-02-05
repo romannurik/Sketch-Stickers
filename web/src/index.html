@@ -35,7 +35,7 @@
             <div class="sticker-library-header__title">{{ library.title }}</div>
             <div class="sticker-library-header__subtitle" v-if="library.subtitle">{{ library.subtitle }}</div>
           </div>
-          <div class="sticker-library-header__colors-area">
+          <div class="sticker-library-header__colors-area" v-if="library.colorsAvailable">
             <span class="sticker-library-header__colors-added" v-if="library.colors && library.colorsAdded">
               <svg-icon glyph="check"></svg-icon>
               Library colors added
