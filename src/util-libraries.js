@@ -157,15 +157,13 @@ export function addLibrary(context, librarySketchFilePath) {
 
 
 /**
- * Replaces all symbol instances under (and including) the given parent layer with
+ * Replaces all symbol instances and shared styles under (and including) the given parent layer with
  * those found in the given MSAssetLibrary.
  */
-export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, library) {
+export function replaceSymbolsAndSharedStylesInLayerWithLibrary(
+    parentDocument, parentLayer, library) {
   if (parentLayer.children) {
-    let allSymbolInstances =  util.getAllLayersMatchingPredicate(
-        parentLayer, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
-
-    let maybeImportForeignSymbolWithSymbolId = symbolId => {
+    let maybeImportForeignObjectWithId = objectId => {
       // TODO: is this valid/useful?
       // let existing = parentDocument.documentData().foreignSymbols()
       //     .find(fs => String(fs.symbolMaster().symbolID()) == String(symbolId));
@@ -173,122 +171,86 @@ export function replaceSymbolsInLayerWithLibrary(parentDocument, parentLayer, li
       //   return existing;
       // }
 
-      let librarySymbolMaster = library.document().symbolWithID(symbolId);
-      if (librarySymbolMaster) {
-        if (librarySymbolMaster.foreignObject()) {
-          // the symbol in the target library is a foreign symbol from yet
+      let objectInLibrary = (
+          library.document().symbolWithID(objectId) ||
+          library.document().textStyleWithID(objectId) ||
+          library.document().layerStyleWithID(objectId));
+      if (objectInLibrary) {
+        if (objectInLibrary.foreignObject()) {
+          // the shared obj in the target library is a foreign obj from yet
           // another library, try to import it from the other library, and if
-          // unavailable, grab the MSForeignSymbol/MSForeignObject
-          // and add it to the target document directly
-          let foreignSymbol = librarySymbolMaster.foreignObject();
-          let nestedLibrary = getLibraryById(foreignSymbol.libraryID(), {onlyEnabled: true});
+          // unavailable, grab the MSForeignObject and add it to the target
+          // document directly
+          let foreignObject = objectInLibrary.foreignObject();
+          let nestedLibrary = getLibraryById(foreignObject.libraryID(), {onlyEnabled: true});
           if (nestedLibrary) {
-            return importForeignSymbolCompat(librarySymbolMaster, nestedLibrary,
+            return importObjectFromLibrary(objectInLibrary, nestedLibrary,
                 parentDocument.documentData());
           } else {
-            parentDocument.documentData().addForeignSymbol(foreignSymbol);
-            // TODO: investigate what other dependencies we may need to bring in
-            // when calling addForeignSymbol() on a foreign symbol from another doc.
-            // likely we need to add other foreign symbols that this one relies on
-            return foreignSymbol;
+            if (objectInLibrary instanceof MSSymbolMaster) {
+              // TODO: investigate what other dependencies we may need to bring in
+              // when calling addForeignXX() on a foreign object from another doc.
+              // likely we need to add other foreign objects that this one relies on
+              parentDocument.documentData().addForeignSymbol(foreignObject);
+              return foreignObject;
+            } /*else if (objectInLibrary instanceof MSTextStyle) {
+              parentDocument.documentData().addForeignTextStyle(foreignObject);
+            } else if (objectInLibrary instanceof MSLayerStyle) {
+              parentDocument.documentData().addForeignLayerStyle(foreignObject);
+            }*/
           }
         }
 
         // the symbol in the target library is local to the library, import it
         // from the library
-        return importForeignSymbolCompat(librarySymbolMaster, library,
+        return importObjectFromLibrary(objectInLibrary, library,
             parentDocument.documentData());
       }
 
       return null;
     };
 
-    // Imports an override dictionary of the form:
-    //
-    // { 'symbolID': '123',
-    //   '456': { 'symbolID': '789', ... },
-    //   ...  }
-    //
-    // This is necessary when importing override symbols that themselves have overrides
-    let deepImportOverrides = (dict, localToForeignSymbolIdMap) => {
-      if (dict.symbolID) {
-        let foreignSymbol = maybeImportForeignSymbolWithSymbolId(dict.symbolID);
-        if (foreignSymbol) {
+    // Deep import is necessary when importing override symbols that themselves have overrides
+    // This method returns a mapping from local to foreign ID
+    let deepImportOverrides = (overridesDict) => {
+      let localToForeignIdMap = {};
+      for (let k in overridesDict) {
+        let foreignObject = maybeImportForeignObjectWithId(overridesDict[k]);
+        if (foreignObject) {
           // swap out the symbol ID that's local to the library for the symbol ID
           // for the foreign symbol in the new document linked to the library
-          localToForeignSymbolIdMap[String(dict.symbolID)] =
-              String(foreignSymbol.symbolMaster().symbolID());
+          localToForeignIdMap[String(overridesDict[k])] = String(foreignObject.localShareID());
         }
-      }
 
-      for (let k in dict) {
-        if (dict[k].symbolID) {
-          deepImportOverrides(dict[k], localToForeignSymbolIdMap);
-        }
+        localToForeignIdMap = Object.assign(
+            localToForeignIdMap,
+            deepImportOverrides(overridesDict[k]));
       }
+      return localToForeignIdMap;
     };
 
+    let allSymbolInstances =  util.getAllLayersMatchingPredicate(
+        parentLayer, NSPredicate.predicateWithFormat('className == %@', 'MSSymbolInstance'));
     allSymbolInstances.forEach(symbolInstance => {
       let symbolId = symbolInstance.symbolID();
-      let foreignSymbol = maybeImportForeignSymbolWithSymbolId(symbolId);
+      let foreignSymbol = maybeImportForeignObjectWithId(symbolId);
       if (foreignSymbol) {
         symbolInstance.changeInstanceToSymbol(foreignSymbol.symbolMaster());
-        replaceSymbolsInLayerWithLibrary(parentDocument, foreignSymbol.symbolMaster(), library);
+        replaceSymbolsAndSharedStylesInLayerWithLibrary(
+            parentDocument, foreignSymbol.symbolMaster(), library);
       }
 
-      let localToForeignSymbolIdMap = {};
-      for (let [overrideId, overrideDict] of
-           Object.entries(util.dictFromNSDict(symbolInstance.overrides()))) {
-        deepImportOverrides(overrideDict, localToForeignSymbolIdMap);
-      }
+      let overrides = util.dictFromNSDict(symbolInstance.overrides());
+      let localToForeignSharedObjectIdMap = deepImportOverrides(overrides);
 
-      symbolInstance.updateOverridesWithObjectIDMap(localToForeignSymbolIdMap);
+      symbolInstance.updateOverridesWithObjectIDMap(localToForeignSharedObjectIdMap);
     });
-  }
-}
 
-
-
-/**
- * Replaces all shared styles under (and including) the given parent layer with
- * those found in the given MSAssetLibrary.
- */
-export function replaceSharedStylesInLayerWithLibrary(parentDocument, parentLayer, library) {
-  if (parentLayer.children) {
     let allLayersWithSharedStyle = util.getAllLayersMatchingPredicate(
-        parentLayer, NSPredicate.predicateWithFormat('style.sharedObjectID != nil'));
-
-    let maybeImportForeignSharedStyleWithStyleId = styleId => {
-      let librarySharedStyle = library.document().layerStyles().sharedStyleWithID(styleId)
-          || library.document().layerTextStyles().sharedStyleWithID(styleId);
-      if (librarySharedStyle) {
-        if (librarySharedStyle.foreignObject()) {
-          // the shared style in the target library is a foreign shared style from yet
-          // another library, just grab the MSForeignStyle/MSForeignObject
-          // and add it to the target document
-          let foreignStyle = librarySharedStyle.foreignObject();
-          if (foreignStyle instanceof MSForeignLayerStyle) {
-            parentDocument.documentData().addForeignLayerStyle(foreignSymbol);
-          } else if (foreignStyle instanceof MSForeignTextStyle) {
-            parentDocument.documentData().addForeignTextStyle(foreignStyle);
-          }
-          return foreignStyle;
-        }
-
-        // the symbol in the target library is local to the library, import it
-        // from the library
-        let shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(
-            librarySharedStyle, library);
-        return getLibrariesController().importShareableObjectReference_intoDocument(
-            shareableObjectReference, parentDocument.documentData());
-      }
-
-      return null;
-    };
-
+        parentLayer, NSPredicate.predicateWithFormat('sharedStyleID != nil'));
     allLayersWithSharedStyle.forEach(layerWithSharedStyle => {
-      let styleId = layerWithSharedStyle.style().sharedObjectID();
-      let foreignSharedStyle = maybeImportForeignSharedStyleWithStyleId(styleId);
+      let styleId = layerWithSharedStyle.sharedStyleID();
+      let foreignSharedStyle = maybeImportForeignObjectWithId(styleId);
       if (foreignSharedStyle) {
         if (layerWithSharedStyle instanceof MSTextLayer) {
           // preserve formatted string value before setting shared style (which resets
@@ -309,24 +271,17 @@ export function replaceSharedStylesInLayerWithLibrary(parentDocument, parentLaye
  * Compatibility layer for importForeignSymbol_fromLibrary_intoDocument,
  * removed in Sketch 50.
  *
- * @param {MSSymbolMaster} librarySymbolMaster The symbol master in the library to import
+ * @param {MSModelObject} libraryObject The object (e.g. symbol master, style) in library to import
  * @param {MSAssetLibrary} library The library to import from
  * @param {MSDocumentData} parentDocumentData The document data to import into
- * @returns {MSForeignSymbol}
+ * @returns {MSForeignObject}
  */
-function importForeignSymbolCompat(librarySymbolMaster, library, parentDocumentData) {
+function importObjectFromLibrary(libraryObject, library, parentDocumentData) {
   let librariesController = getLibrariesController();
-  if (librariesController.importForeignSymbol_fromLibrary_intoDocument) {
-    // Sketch < 50
-    return librariesController.importForeignSymbol_fromLibrary_intoDocument(
-        librarySymbolMaster, library, parentDocumentData);
-  } else {
-    // Sketch 50
-    let shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(
-        librarySymbolMaster, library);
-    return librariesController.importShareableObjectReference_intoDocument(
-        shareableObjectReference, parentDocumentData);
-  }
+  let shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(
+      libraryObject, library);
+  return librariesController.importShareableObjectReference_intoDocument(
+      shareableObjectReference, parentDocumentData);
 }
 
 
