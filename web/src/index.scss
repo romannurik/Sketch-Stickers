@@ -223,6 +223,7 @@ body {
     flex-direction: row;
     align-items: center;
     @include type-body-3;
+    color: var(--theme-color-fg-tertiary);
 
     .svg-icon {
       width: 16px;
