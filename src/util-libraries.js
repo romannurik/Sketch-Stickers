@@ -58,15 +58,21 @@ export function replaceSymbolsAndSharedStylesInLayerWithLibrary(
           library.document().textStyleWithID(objectId) ||
           library.document().layerStyleWithID(objectId));
       if (objectInLibrary) {
-        if (objectInLibrary.foreignObject()) {
+        let foreignObject = objectInLibrary.foreignObject();
+
+        if (foreignObject) {
           // the shared obj in the target library is a foreign obj from yet
           // another library, try to import it from the other library, and if
           // unavailable, grab the MSForeignObject and add it to the target
           // document directly
-          let foreignObject = objectInLibrary.foreignObject();
           let nestedLibrary = getLibraryById(foreignObject.libraryID(), {onlyEnabled: true});
           if (nestedLibrary) {
-            return importObjectFromLibrary(objectInLibrary, nestedLibrary,
+            let objectInNestedLibrary = (
+                nestedLibrary.document().symbolWithID(foreignObject.remoteShareID()) ||
+                nestedLibrary.document().textStyleWithID(foreignObject.remoteShareID()) ||
+                nestedLibrary.document().layerStyleWithID(foreignObject.remoteShareID()) ||
+                objectInLibrary /* worst case, just try to import the object in the outer lib */);
+            return importObjectFromLibrary(objectInNestedLibrary, nestedLibrary,
                 parentDocument.documentData());
           } else {
             if (objectInLibrary instanceof MSSymbolMaster) {
