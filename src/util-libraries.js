@@ -146,8 +146,10 @@ export function replaceSymbolsAndSharedStylesInLayerWithLibrary(
           let aStr = layerWithSharedStyle.attributedStringValue();
           layerWithSharedStyle.setSharedStyle(foreignSharedStyle.localSharedStyle());
           layerWithSharedStyle.setAttributedStringValue(aStr);
-        } else {
+        } else { // inherits MSStyledLayer
+          let style = layerWithSharedStyle.style().copy();
           layerWithSharedStyle.setSharedStyle(foreignSharedStyle.localSharedStyle());
+          layerWithSharedStyle.setStyle(style);
         }
       }
     });
