@@ -26,9 +26,11 @@ import {makeStickerIndexForLibraries} from './sticker-index';
 
 const THREAD_DICT_KEY = 'stickers.BrowserWindow';
 const UI_MODE = 'cover';
-// MSTheme.sharedTheme().isDark()
-const DARK_MODE = (NSAppKitVersionNumber >= 1671 &&
-    'Dark' === String(NSUserDefaults.standardUserDefaults().stringForKey('AppleInterfaceStyle')));
+
+const DARK_MODE = (MSTheme && MSTheme.sharedTheme().isDark)
+    ? MSTheme.sharedTheme().isDark()
+    : (NSAppKitVersionNumber >= 1671 &&
+      'Dark' === String(NSUserDefaults.standardUserDefaults().stringForKey('AppleInterfaceStyle')));
 
 const BUILD_SKETCH_53_BETA_1 = 71402;
 
