@@ -89,6 +89,9 @@ class StickersPage {
   }
 
   setupCoreUi() {
+    $(window).on('focus', () => {
+      $('.header-area__search-field').focus().select();
+    });
     $(document.body).attr('ui-mode',
         (window.location.search.match(/uiMode=(\w+)/) || [])[1] || 'cover');
 

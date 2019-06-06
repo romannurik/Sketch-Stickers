@@ -46,8 +46,12 @@ export class StickersUI {
   showHide() {
     let browserWindow = this.getPersistedObj();
     if (browserWindow) {
-      browserWindow.close();
-      this.setPersistedObj(null);
+      if (UI_MODE == 'cover') {
+        browserWindow.close();
+        this.setPersistedObj(null);
+      } else {
+        browserWindow.show();
+      }
     } else {
       this.createAndShow();
     }
@@ -93,6 +97,7 @@ export class StickersUI {
       width: 800,
       height: 600,
       show: false,
+      alwaysOnTop: UI_MODE == 'palette',
       frame: UI_MODE == 'palette',
       hasShadow: UI_MODE == 'palette',
       acceptsFirstMouse: true,
@@ -106,7 +111,11 @@ export class StickersUI {
       coscript.setShouldKeepAround(false);
     });
 
-    this.browserWindow.on('blur', () => this.browserWindow.close());
+    this.browserWindow.on('blur', () => {
+      if (UI_MODE == 'cover') {
+        this.browserWindow.close();
+      }
+    });
 
     if (UI_MODE == 'cover') {
       this.browserWindow.setResizable(false);
