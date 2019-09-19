@@ -444,24 +444,27 @@ body {
   }
 
   &__thumb-container {
+    --hit-area-padding: 4px;
+    margin: calc(0px - var(--hit-area-padding));
+    padding: var(--hit-area-padding);
+    cursor: pointer;
     display: flex;
     background-color: transparent;
     transition: background-color .1s ease;
+
+    &:hover .sticker__thumb {
+      //transform: scale(1.03);
+      opacity: .85;
+      transform: translateY(-2px);
+    }
   }
 
   &__thumb {
     // @include sticker-effects;
     object-fit: contain;
-    cursor: pointer;
     background-color: transparent;
     transition: transform .1s ease, opacity .1s ease;
     opacity: 1;
-
-    &:hover {
-      //transform: scale(1.03);
-      opacity: .85;
-      transform: translateY(-2px);
-    }
   }
 
   &__caption {
@@ -473,7 +476,7 @@ body {
   &.has-background-color {
     .sticker__thumb-container {
       @include sticker-effects;
-      padding: 24px;
+      padding: calc(var(--hit-area-padding) + 24px);
     }
 
     .sticker__caption {

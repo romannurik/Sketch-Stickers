@@ -274,11 +274,13 @@ class StickersPage {
       size.width = size.width * MAX_DRAW_HEIGHT / size.height;
       size.height = MAX_DRAW_HEIGHT;
     }
+    size.width = Math.max(1, size.width);
+    size.height = Math.max(1, size.height);
     return size;
   }
 
   setupStickersUi() {
-    $(document).on('mousedown', '.sticker__thumb', ev => {
+    $(document).on('mousedown', '.sticker__thumb-container', ev => {
       let stickerId = $(ev.target).parents('.sticker').attr('data-sticker-id');
       let rect = $(ev.target).get(0).getBoundingClientRect();
       rect = {
