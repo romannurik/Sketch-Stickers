@@ -214,9 +214,10 @@ export class StickersUI {
     // deserialize layer
     let serializedLayerJson = fs.readFileSync(
         this.getStickerCachedContentPath(stickerId), {encoding: 'utf8'});
-    let decodedImmutableObj = MSJSONDataUnarchiver
-        .unarchiveObjectWithString_asVersion_corruptionDetected_error(
-            serializedLayerJson, archiveVersion || 999, null, null);
+    let unarchiveFn = ( // method was renamed in Sketch 64 -- extra 'd')
+        MSJSONDataUnarchiver.unarchivedObjectWithString_asVersion_corruptionDetected_error ||
+        MSJSONDataUnarchiver.unarchiveObjectWithString_asVersion_corruptionDetected_error);
+    let decodedImmutableObj = unarchiveFn(serializedLayerJson, archiveVersion || 999, null, null);
     let layer = decodedImmutableObj.newMutableCounterpart();
 
     // create a dummy document and import the layer into it, so that
