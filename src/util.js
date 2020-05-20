@@ -176,12 +176,12 @@ export function getLayerImage(document, layer) {
 export function captureLayerImage(document, layer, destPath) {
   let air = layer.absoluteInfluenceRect();
   let rect = NSMakeRect(air.origin.x, air.origin.y, air.size.width, air.size.height);
-  let exportRequest = MSExportRequest.exportRequestsFromLayerAncestry_inRect_(
-      MSImmutableLayerAncestry.ancestryWithMSLayer_(layer),
-      rect // we pass this to avoid trimming
-      ).firstObject();
-  exportRequest.format = 'png';
-  exportRequest.scale = 2;
+  let exportRequest = MSExportRequest.exportRequestFromExportFormat_layer_inRect_useIDForName_(
+      MSExportFormat.formatWithScale_name_fileFormat_(2.0, 'temp.png', 'png'),
+      layer,
+      rect, // avoid trimming
+      true);
+
   if (!(layer instanceof MSArtboardGroup || layer instanceof MSSymbolMaster)) {
     exportRequest.includeArtboardBackground = false;
   }
