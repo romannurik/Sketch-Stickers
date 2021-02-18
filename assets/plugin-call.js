@@ -14,5 +14,4 @@
  * limitations under the License.
  */
 
-import pluginCall from 'sketch-module-web-view/client';
-window['pluginCall'] = pluginCall;
+window['pluginCall'] = window.postMessage;

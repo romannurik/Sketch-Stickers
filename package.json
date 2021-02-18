@@ -41,7 +41,7 @@
     "babel-polyfill": "^6.26.0",
     "js-yaml": "^3.11.0",
     "mocha-js-delegate": "^0.1.1",
-    "sketch-module-web-view": "git://github.com/romannurik/sketch-module-wk-web-view.git"
+    "sketch-module-web-view": "3.5.1"
   },
   "devDependencies": {
     "@skpm/builder": "^0.5.4"

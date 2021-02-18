@@ -261,6 +261,10 @@ export class StickersUI {
       let newPbLayers = MSPasteboardLayers.pasteboardLayersWithLayers([layer]);
       MSPasteboardManager.writePasteboardLayers_toPasteboard(newPbLayers, dpb);
     } catch (err) {
+      if (err.nativeException) {
+        console.log(err.nativeException.name(), err.nativeException.reason());
+        console.log(err.nativeException.callStackSymbols());
+      }
       throw err;
     }
   }

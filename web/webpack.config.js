@@ -53,6 +53,10 @@ module.exports = {
   performance: {
     hints: false
   },
+  node: {
+    // https://sketchplugins.com/d/2188-webpacks-bundled-code-trigger-throw-new-errormissing-action-name/2
+    setImmediate: false
+  },
   module: {
     rules: [
       {
