@@ -1,7 +1,7 @@
 {
   "name": "sketch-stickers",
   "description": "A Sketch plugin that lets you browse and quickly drag+drop stickers (specially tagged layers) in your Sketch Libraries.",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "engines": {
     "sketch": ">=49.0"
   },
