@@ -256,10 +256,19 @@ export class StickersUI {
 
     // copy to pasteboard
     let dpb = NSPasteboard.pasteboardWithName(NSDragPboard);
-    dpb.clearContents();
+    dpb.clearContents(); // remove the image version from the pasteboard
     try {
-      let newPbLayers = MSPasteboardLayers.pasteboardLayersWithLayers([layer]);
-      MSPasteboardManager.writePasteboardLayers_toPasteboard(newPbLayers, dpb);
+      let layerWriter = Array.from(NSApp.delegate().pasteboardManager().writers())
+          .find(x => String(x.className()) === 'MSPasteboardLayersReaderWriter');
+      if (layerWriter) {
+        layerWriter.writeData_toPasteboard(
+            MSPasteboardLayers.pasteboardLayersWithLayers([layer]),
+            dpb);
+      }
+      // TODO: use this simpler method when it's no longer broken (as of Sketch 70.5)
+      // MSPasteboardManager.writePasteboardLayers_toPasteboard(
+      //     MSPasteboardLayers.pasteboardLayersWithLayers([layer]),
+      //     dpb);
     } catch (err) {
       if (err.nativeException) {
         console.log(err.nativeException.name(), err.nativeException.reason());
